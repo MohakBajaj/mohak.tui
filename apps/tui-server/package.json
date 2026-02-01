@@ -1,0 +1,10 @@
+{
+  "name": "@mohak/tui-server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "go build -o bin/tui-server .",
+    "dev": "CONTENT_PATH=../../packages/shared-content go run .",
+    "start": "CONTENT_PATH=../../packages/shared-content ./bin/tui-server"
+  }
+}

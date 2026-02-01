@@ -1,0 +1,24 @@
+{
+  "name": "@mohak/ai-gateway",
+  "version": "0.0.1",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch run index.ts",
+    "start": "bun run index.ts",
+    "build": "echo 'No build step needed for Bun'"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "^3.0.32",
+    "@mohak/shared-content": "workspace:*",
+    "ai": "^6.0.67",
+    "hono": "^4.11.7"
+  }
+}

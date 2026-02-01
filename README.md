@@ -1,135 +1,153 @@
-# Turborepo starter
+# mohak.sh - SSH TUI Portfolio
 
-This Turborepo starter is maintained by the Turborepo core team.
+A cyberpunk-themed SSH-accessible terminal portfolio built with Go, Bubble Tea, and Wish.
 
-## Using this example
-
-Run the following command:
-
-```sh
-npx create-turbo@latest
+```bash
+ssh mohak.sh
 ```
 
-## What's inside?
+## Tech Stack
 
-This Turborepo includes the following packages/apps:
+- **TUI Server**: Go + Bubble Tea + Lip Gloss + Wish
+- **AI Gateway**: Bun + Hono + Vercel AI SDK
+- **Monorepo**: Turborepo + Bun
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Project Structure
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+mohak.tui/
+├─ apps/
+│  ├─ tui-server/        # Go SSH + Bubble Tea TUI
+│  └─ ai-gateway/        # Bun AI streaming service
+├─ packages/
+│  └─ shared-content/    # Resume, projects, bio, theme
+├─ turbo.json
+└─ package.json
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Local Development
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+### Prerequisites
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+- [Go](https://go.dev/dl/) 1.21+
+- [Bun](https://bun.sh/) 1.0+
 
-### Develop
+### Setup
 
-To develop all apps and packages, run the following command:
+1. Clone and install dependencies:
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+```bash
+git clone https://github.com/mohakbajaj/mohak-tui.git
+cd mohak-tui
+bun install
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+2. Configure environment variables:
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```bash
+cp .env.example .env
+# Edit .env with your AI_GATEWAY_API_KEY
 ```
 
-### Remote Caching
+3. Build the Go TUI server:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+cd apps/tui-server
+go build -o bin/tui-server .
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Running Locally
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+**Option 1: Run both services**
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
+Terminal 1 - AI Gateway:
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```bash
+bun run dev:ai
 ```
 
-## Useful Links
+Terminal 2 - TUI Server:
 
-Learn more about the power of Turborepo:
+```bash
+bun run dev:tui
+```
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+**Option 2: Run with turbo**
+
+```bash
+bun run dev
+```
+
+### Connect via SSH
+
+```bash
+ssh -p 2222 localhost
+```
+
+## Available Commands
+
+| Command               | Description             |
+| --------------------- | ----------------------- |
+| `help`                | Show available commands |
+| `about`               | Learn about me          |
+| `projects`            | View my projects        |
+| `open <id>`           | View project details    |
+| `resume`              | View my resume          |
+| `chat`                | Chat with AI assistant  |
+| `theme <dark\|light>` | Switch color theme      |
+| `clear`               | Clear the screen        |
+| `exit`                | Exit the session        |
+
+## Environment Variables
+
+### AI Gateway (`apps/ai-gateway`)
+
+| Variable                | Description               | Default                       |
+| ----------------------- | ------------------------- | ----------------------------- |
+| `AI_GATEWAY_API_KEY`    | Vercel AI Gateway API key | Required                      |
+| `AI_GATEWAY_MODEL`      | Model to use              | `anthropic/claude-sonnet-4.5` |
+| `AI_GATEWAY_PORT`       | Server port               | `3001`                        |
+| `AI_GATEWAY_RATE_LIMIT` | Requests per minute       | `10`                          |
+| `AI_GATEWAY_MAX_TOKENS` | Max response tokens       | `1024`                        |
+
+### TUI Server (`apps/tui-server`)
+
+| Variable         | Description            | Default                 |
+| ---------------- | ---------------------- | ----------------------- |
+| `SSH_HOST`       | SSH server host        | `0.0.0.0`               |
+| `SSH_PORT`       | SSH server port        | `2222`                  |
+| `AI_GATEWAY_URL` | AI Gateway URL         | `http://localhost:3001` |
+| `CONTENT_PATH`   | Path to shared content | Auto-detected           |
+
+## Production Deployment
+
+### Docker (Coming Soon)
+
+```bash
+docker compose up -d
+```
+
+### Manual Deployment
+
+1. Build the TUI server:
+
+```bash
+cd apps/tui-server
+go build -o bin/tui-server .
+```
+
+2. Run with systemd or supervisor
+
+3. Configure firewall to allow port 22 (or custom SSH port)
+
+## Security Notes
+
+- SSH sessions are isolated per connection
+- Rate limiting on AI chat (configurable)
+- Max sessions per IP (default: 5)
+- Idle timeout (default: 10 minutes)
+- No shell access - TUI only
+
+## License
+
+MIT

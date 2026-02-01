@@ -27,6 +27,16 @@ out/
 build
 dist
 
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# SSH Keys
+.ssh/
 
 # Debug
 npm-debug.log*

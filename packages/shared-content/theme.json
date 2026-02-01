@@ -1,0 +1,30 @@
+{
+  "dark": {
+    "name": "Cyberpunk Dark",
+    "background": "#0d0d0d",
+    "foreground": "#e0e0e0",
+    "primary": "#00ff9f",
+    "secondary": "#ff00ff",
+    "accent": "#00ffff",
+    "error": "#ff3333",
+    "warning": "#ffaa00",
+    "success": "#00ff9f",
+    "muted": "#666666",
+    "border": "#333333",
+    "highlight": "#1a1a2e"
+  },
+  "light": {
+    "name": "Cyberpunk Light",
+    "background": "#fafafa",
+    "foreground": "#1a1a1a",
+    "primary": "#009966",
+    "secondary": "#990099",
+    "accent": "#006699",
+    "error": "#cc0000",
+    "warning": "#cc8800",
+    "success": "#009966",
+    "muted": "#888888",
+    "border": "#cccccc",
+    "highlight": "#e6f7ff"
+  }
+}

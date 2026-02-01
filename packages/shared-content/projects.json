@@ -1,0 +1,58 @@
+{
+  "projects": [
+    {
+      "id": "ssh-portfolio",
+      "name": "SSH TUI Portfolio",
+      "description": "This very application! An SSH-accessible terminal portfolio built with Go, Bubble Tea, and Wish. Features a cyberpunk theme, AI-powered chat, and interactive command interface.",
+      "tech": ["Go", "Bubble Tea", "Wish", "Lip Gloss"],
+      "status": "active",
+      "links": {
+        "demo": "ssh mohak.sh",
+        "github": "github.com/mohak-bajaj/mohak-tui"
+      }
+    },
+    {
+      "id": "cboarding",
+      "name": "CBoarding",
+      "description": "Whiteboard & Notes App equipped with ChatGPT powered rich text-editor for notes and a drawing canvas for whiteboard. Features include exporting notes and boards, with local storage persistence.",
+      "tech": ["React", "ChatGPT", "Canvas API", "TypeScript"],
+      "status": "active",
+      "links": {
+        "demo": "cboarding.bmohak.xyz",
+        "github": "github.com/mohak-bajaj/cboarding"
+      }
+    },
+    {
+      "id": "echo",
+      "name": "Echo",
+      "description": "A groundbreaking anonymous social media platform designed to amplify voices while maintaining user privacy and anonymity.",
+      "tech": ["React", "Node.js", "MongoDB", "WebSockets"],
+      "status": "completed",
+      "links": {
+        "github": "github.com/mohak-bajaj/echo"
+      }
+    },
+    {
+      "id": "uncut",
+      "name": "Uncut",
+      "description": "Inspired by the Blind app, Uncut provides college students a platform to anonymously share their opinions. Built with a custom anonymous authentication system to maintain complete anonymity.",
+      "tech": ["Next.js", "PostgreSQL", "Auth.js", "TailwindCSS"],
+      "status": "active",
+      "links": {
+        "demo": "uncut.bmohak.xyz",
+        "github": "github.com/mohak-bajaj/uncut"
+      }
+    },
+    {
+      "id": "wordsmith",
+      "name": "Wordsmith",
+      "description": "A comprehensive text utility tool for various text manipulation and formatting needs. Available as web app and Docker container.",
+      "tech": ["React", "Docker", "TypeScript"],
+      "status": "completed",
+      "links": {
+        "demo": "wordsmith.bmohak.xyz",
+        "github": "github.com/mohak-bajaj/wordsmith"
+      }
+    }
+  ]
+}
