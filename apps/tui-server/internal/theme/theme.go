@@ -9,52 +9,52 @@ var Colors = struct {
 	// Base
 	Background string
 	Foreground string
-	
+
 	// Neon colors
-	Neon       string // Hot pink/magenta
-	Cyan       string // Electric cyan
-	Yellow     string // Warning yellow
-	Green      string // Matrix green
-	Orange     string // Neon orange
-	Red        string // Alert red
-	Purple     string // Deep purple
-	Blue       string // Electric blue
-	
+	Neon   string // Hot pink/magenta
+	Cyan   string // Electric cyan
+	Yellow string // Warning yellow
+	Green  string // Matrix green
+	Orange string // Neon orange
+	Red    string // Alert red
+	Purple string // Deep purple
+	Blue   string // Electric blue
+
 	// UI colors
-	Muted       string
-	Dim         string
-	Border      string
+	Muted        string
+	Dim          string
+	Border       string
 	BorderBright string
-	Highlight   string
-	
+	Highlight    string
+
 	// Text variants
-	BodyText         string
-	UserText         string
-	AssistantText    string
+	BodyText      string
+	UserText      string
+	AssistantText string
 }{
 	Background: "#0d0d12",
 	Foreground: "#e8f0f8", // Bright white-blue
-	
+
 	// Neon cyberpunk colors - MORE SATURATED
-	Neon:       "#ff2a6d", // Hot pink
-	Cyan:       "#00ffff", // Pure electric cyan
-	Yellow:     "#ffff00", // Pure neon yellow
-	Green:      "#00ff41", // Matrix green (brighter)
-	Orange:     "#ff9500", // Bright neon orange
-	Red:        "#ff0055", // Neon red
-	Purple:     "#bf00ff", // Electric purple
-	Blue:       "#00d4ff", // Bright neon blue
-	
+	Neon:   "#ff2a6d", // Hot pink
+	Cyan:   "#00ffff", // Pure electric cyan
+	Yellow: "#ffff00", // Pure neon yellow
+	Green:  "#00ff41", // Matrix green (brighter)
+	Orange: "#ff9500", // Bright neon orange
+	Red:    "#ff0055", // Neon red
+	Purple: "#bf00ff", // Electric purple
+	Blue:   "#00d4ff", // Bright neon blue
+
 	Muted:        "#7a8a9a", // Brighter muted - used for borders
 	Dim:          "#556677", // Cyan-tinted dim
 	Border:       "#2a3040", // Dark border
 	BorderBright: "#446688", // Bright cyan-tinted border
 	Highlight:    "#1a2535", // Deep blue highlight
-	
+
 	// Text variants
-	BodyText:       "#d0e0f0", // Soft white-blue
-	UserText:       "#c0e8ff", // Light cyan tint
-	AssistantText:  "#e0f0e8", // Light green tint
+	BodyText:      "#d0e0f0", // Soft white-blue
+	UserText:      "#c0e8ff", // Light cyan tint
+	AssistantText: "#e0f0e8", // Light green tint
 }
 
 // Styles contains all lipgloss styles for the TUI
@@ -65,25 +65,25 @@ type Styles struct {
 	Footer lipgloss.Style
 
 	// Text
-	Title       lipgloss.Style
-	Subtitle    lipgloss.Style
-	Body        lipgloss.Style
-	Muted       lipgloss.Style
-	Dim         lipgloss.Style
-	Error       lipgloss.Style
-	Success     lipgloss.Style
-	Warning     lipgloss.Style
-	Info        lipgloss.Style
+	Title    lipgloss.Style
+	Subtitle lipgloss.Style
+	Body     lipgloss.Style
+	Muted    lipgloss.Style
+	Dim      lipgloss.Style
+	Error    lipgloss.Style
+	Success  lipgloss.Style
+	Warning  lipgloss.Style
+	Info     lipgloss.Style
 
 	// Neon colors
-	Neon      lipgloss.Style
-	Cyan      lipgloss.Style
-	Yellow    lipgloss.Style
-	Green     lipgloss.Style
-	Orange    lipgloss.Style
-	Red       lipgloss.Style
-	Purple    lipgloss.Style
-	Blue      lipgloss.Style
+	Neon   lipgloss.Style
+	Cyan   lipgloss.Style
+	Yellow lipgloss.Style
+	Green  lipgloss.Style
+	Orange lipgloss.Style
+	Red    lipgloss.Style
+	Purple lipgloss.Style
+	Blue   lipgloss.Style
 
 	// Interactive
 	Prompt      lipgloss.Style
@@ -103,24 +103,27 @@ type Styles struct {
 	Tag       lipgloss.Style
 	Link      lipgloss.Style
 	Highlight lipgloss.Style
-	
+
 	// Cyberpunk specific
-	Glitch    lipgloss.Style
-	Scanline  lipgloss.Style
+	Glitch   lipgloss.Style
+	Scanline lipgloss.Style
 }
 
 // Manager handles styles
 type Manager struct {
-	styles Styles
-	width  int
-	height int
+	styles   Styles
+	width    int
+	height   int
+	renderer *lipgloss.Renderer
 }
 
-// NewManager creates a theme manager
-func NewManager(width, height int) *Manager {
+// NewManager creates a theme manager with an optional renderer
+// If renderer is nil, uses the default lipgloss renderer
+func NewManager(width, height int, renderer *lipgloss.Renderer) *Manager {
 	m := &Manager{
-		width:  width,
-		height: height,
+		width:    width,
+		height:   height,
+		renderer: renderer,
 	}
 	m.buildStyles()
 	return m
@@ -148,120 +151,128 @@ func (m *Manager) Height() int {
 	return m.height
 }
 
+// newStyle creates a new style using the session renderer if available
+func (m *Manager) newStyle() lipgloss.Style {
+	if m.renderer != nil {
+		return m.renderer.NewStyle()
+	}
+	return lipgloss.NewStyle()
+}
+
 func (m *Manager) buildStyles() {
 	// Base styles
-	m.styles.App = lipgloss.NewStyle().
+	m.styles.App = m.newStyle().
 		Background(lipgloss.Color(Colors.Background)).
 		Foreground(lipgloss.Color(Colors.Foreground))
 
-	m.styles.Header = lipgloss.NewStyle().
+	m.styles.Header = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Neon)).
 		Bold(true)
 
-	m.styles.Footer = lipgloss.NewStyle().
+	m.styles.Footer = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Muted))
 
 	// Text styles
-	m.styles.Title = lipgloss.NewStyle().
+	m.styles.Title = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Neon)).
 		Bold(true)
 
-	m.styles.Subtitle = lipgloss.NewStyle().
+	m.styles.Subtitle = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Cyan)).
 		Bold(true)
 
-	m.styles.Body = lipgloss.NewStyle().
+	m.styles.Body = m.newStyle().
 		Foreground(lipgloss.Color(Colors.BodyText))
 
-	m.styles.Muted = lipgloss.NewStyle().
+	m.styles.Muted = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Muted))
 
-	m.styles.Dim = lipgloss.NewStyle().
+	m.styles.Dim = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Dim))
 
-	m.styles.Error = lipgloss.NewStyle().
+	m.styles.Error = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Red)).
 		Bold(true)
 
-	m.styles.Success = lipgloss.NewStyle().
+	m.styles.Success = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Green))
 
-	m.styles.Warning = lipgloss.NewStyle().
+	m.styles.Warning = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Yellow))
 
-	m.styles.Info = lipgloss.NewStyle().
+	m.styles.Info = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Cyan))
 
 	// Neon color styles
-	m.styles.Neon = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Neon))
-	m.styles.Cyan = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Cyan))
-	m.styles.Yellow = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Yellow))
-	m.styles.Green = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Green))
-	m.styles.Orange = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Orange))
-	m.styles.Red = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Red))
-	m.styles.Purple = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Purple))
-	m.styles.Blue = lipgloss.NewStyle().Foreground(lipgloss.Color(Colors.Blue))
+	m.styles.Neon = m.newStyle().Foreground(lipgloss.Color(Colors.Neon))
+	m.styles.Cyan = m.newStyle().Foreground(lipgloss.Color(Colors.Cyan))
+	m.styles.Yellow = m.newStyle().Foreground(lipgloss.Color(Colors.Yellow))
+	m.styles.Green = m.newStyle().Foreground(lipgloss.Color(Colors.Green))
+	m.styles.Orange = m.newStyle().Foreground(lipgloss.Color(Colors.Orange))
+	m.styles.Red = m.newStyle().Foreground(lipgloss.Color(Colors.Red))
+	m.styles.Purple = m.newStyle().Foreground(lipgloss.Color(Colors.Purple))
+	m.styles.Blue = m.newStyle().Foreground(lipgloss.Color(Colors.Blue))
 
 	// Interactive styles
-	m.styles.Prompt = lipgloss.NewStyle().
+	m.styles.Prompt = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Cyan)).
 		Bold(true)
 
-	m.styles.Input = lipgloss.NewStyle().
+	m.styles.Input = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Foreground))
 
-	m.styles.Command = lipgloss.NewStyle().
+	m.styles.Command = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Green)).
 		Bold(true)
 
-	m.styles.CommandHint = lipgloss.NewStyle().
+	m.styles.CommandHint = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Muted)).
 		Italic(true)
 
 	// Chat styles
-	m.styles.UserLabel = lipgloss.NewStyle().
+	m.styles.UserLabel = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Cyan)).
 		Bold(true)
 
-	m.styles.UserMessage = lipgloss.NewStyle().
+	m.styles.UserMessage = m.newStyle().
 		Foreground(lipgloss.Color(Colors.UserText))
 
-	m.styles.AssistantLabel = lipgloss.NewStyle().
+	m.styles.AssistantLabel = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Neon)).
 		Bold(true)
 
-	m.styles.AssistantMessage = lipgloss.NewStyle().
+	m.styles.AssistantMessage = m.newStyle().
 		Foreground(lipgloss.Color(Colors.AssistantText))
 
 	// Component styles
-	m.styles.Border = lipgloss.NewStyle().
+	m.styles.Border = m.newStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color(Colors.BorderBright))
 
-	m.styles.Box = lipgloss.NewStyle().
+	m.styles.Box = m.newStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color(Colors.Cyan)).
 		Padding(0, 1)
 
-	m.styles.Tag = lipgloss.NewStyle().
+	m.styles.Tag = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Background)).
 		Background(lipgloss.Color(Colors.Cyan)).
 		Padding(0, 1).
 		Bold(true)
 
-	m.styles.Link = lipgloss.NewStyle().
+	m.styles.Link = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Blue)).
 		Underline(true)
 
-	m.styles.Highlight = lipgloss.NewStyle().
+	m.styles.Highlight = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Yellow)).
 		Bold(true)
-	
+
 	// Cyberpunk specific
-	m.styles.Glitch = lipgloss.NewStyle().
+	m.styles.Glitch = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Neon)).
 		Background(lipgloss.Color(Colors.Highlight))
-	
-	m.styles.Scanline = lipgloss.NewStyle().
+
+	m.styles.Scanline = m.newStyle().
 		Foreground(lipgloss.Color(Colors.Dim))
 }

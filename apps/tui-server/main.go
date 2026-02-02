@@ -143,8 +143,11 @@ func main() {
 				// Track session with full info
 				analytics.TrackSessionConnectedWithInfo(sessionInfo)
 
-				// Create session-specific theme manager
-				themeManager := theme.NewManager(width, height)
+				// Create renderer tied to SSH session for proper color support
+				renderer := bubbletea.MakeRenderer(s)
+
+				// Create session-specific theme manager with the renderer
+				themeManager := theme.NewManager(width, height, renderer)
 
 				// Create model with analytics
 				model := app.NewModel(app.Config{
