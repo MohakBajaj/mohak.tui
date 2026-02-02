@@ -1,0 +1,25 @@
+apps/ai-gateway/index.ts
+  d44c87afc1dad5b1 6-9,20-21,56,89-90,106,108-109,114-122,135,153-157,164-165,171-174,177,182-192,194,201,205-206,208,213,218,234,258-266,268-276,278-294,301-302,304
+packages/shared-content/index.ts
+  d44c87afc1dad5b1 92,94-117,119-125,127-133,135-141,143-153,155-161,163-169,171-181,186,188-191,193,195-201,203-205,207-209,211-213,215-217,219-221,223-225,227-229,231-261,263,267-283,285-287,291-296,299-304,306-370,372-375,377-402,404-471
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "362f8a662e13184655bb186ed787dfe4268d1c13",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 1535,
+      "total_deletions": 546,
+      "accepted_lines": 1308,
+      "overriden_lines": 21
+    }
+  }
+}
