@@ -1,0 +1,27 @@
+.github/workflows/ci.yml
+  d44c87afc1dad5b1 39
+.github/workflows/deploy.yml
+  d44c87afc1dad5b1 24,32-33,55,65,100-109,116,118,120-124,127-136,138-145,147-148,150,153-159
+docker/tui-server.Dockerfile
+  d44c87afc1dad5b1 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "fe94ddbdfc53d14fdd883f9db0504dc85e7c1aa5",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 55,
+      "total_deletions": 32,
+      "accepted_lines": 53,
+      "overriden_lines": 0
+    }
+  }
+}
