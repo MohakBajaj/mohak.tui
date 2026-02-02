@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
+	"github.com/joho/godotenv"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/app"
@@ -30,6 +31,9 @@ const (
 )
 
 func main() {
+	// Load .env file (ignore error if not found)
+	_ = godotenv.Load()
+
 	// Initialize logger
 	logger := telemetry.NewLogger("tui-server")
 
@@ -103,12 +107,20 @@ func main() {
 			// Bubble Tea middleware
 			bubbletea.Middleware(func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 				sessionStart := time.Now()
-				sessionID := s.RemoteAddr().String()
+
+				// Extract comprehensive session info (PII-safe)
+				sessionInfo := telemetry.ExtractSessionInfo(s)
+
+				// Use hashed session ID for privacy
+				sessionID := sessionInfo.SessionHash
 
 				// Get terminal size
 				pty, _, active := s.Pty()
 				if !active {
-					logger.Warn("No PTY for session", telemetry.Ctx("sessionId", sessionID))
+					logger.Warn("No PTY for session", telemetry.Ctx(
+						"session_hash", sessionID,
+						"user_hash", sessionInfo.UserHash,
+					))
 					return nil, nil
 				}
 
@@ -121,19 +133,15 @@ func main() {
 					height = 24
 				}
 
-				logger.Info("Session connected", telemetry.Ctx(
-					"sessionId", sessionID,
-					"terminal", pty.Term,
-					"width", width,
-					"height", height,
-				))
+				// Update session info with validated dimensions
+				sessionInfo.TerminalWidth = width
+				sessionInfo.TerminalHeight = height
 
-				// Track session
-				analytics.TrackSessionConnected(sessionID, map[string]interface{}{
-					"terminal": pty.Term,
-					"width":    width,
-					"height":   height,
-				})
+				// Log comprehensive session data (all PII-safe)
+				logger.Info("Session connected", sessionInfo.ToMap())
+
+				// Track session with full info
+				analytics.TrackSessionConnectedWithInfo(sessionInfo)
 
 				// Create session-specific theme manager
 				themeManager := theme.NewManager(width, height)
@@ -156,8 +164,10 @@ func main() {
 					<-s.Context().Done()
 					duration := time.Since(sessionStart).Milliseconds()
 					logger.Info("Session disconnected", telemetry.Ctx(
-						"sessionId", sessionID,
-						"durationMs", duration,
+						"session_hash", sessionID,
+						"user_hash", sessionInfo.UserHash,
+						"duration_ms", duration,
+						"terminal", sessionInfo.Terminal,
 					))
 					analytics.TrackSessionDisconnected(sessionID, duration)
 				}()
@@ -173,7 +183,10 @@ func main() {
 				return func(s ssh.Session) {
 					addr := s.RemoteAddr().String()
 					if !sessionCounter.Acquire(addr) {
-						logger.Warn("Rate limited connection", telemetry.Ctx("addr", addr))
+						// Hash IP for logging (PII-safe)
+						logger.Warn("Rate limited connection", telemetry.Ctx(
+							"ip_hash", telemetry.ShortHash(addr),
+						))
 						s.Write([]byte("Too many sessions from your IP. Please try again later.\n"))
 						s.Exit(1)
 						return
@@ -185,9 +198,16 @@ func main() {
 			// Custom logging middleware (replaces wish/logging)
 			func(next ssh.Handler) ssh.Handler {
 				return func(s ssh.Session) {
+					// Extract full session info for detailed logging
+					info := telemetry.ExtractSessionInfo(s)
 					logger.Debug("SSH session started", telemetry.Ctx(
-						"addr", s.RemoteAddr().String(),
-						"user", s.User(),
+						"session_hash", info.SessionHash,
+						"user_hash", info.UserHash,
+						"ip_hash", info.IPHash,
+						"terminal", info.Terminal,
+						"key_type", info.PublicKeyType,
+						"term_program", info.EnvTermProgram,
+						"shell", info.EnvShell,
 					))
 					next(s)
 				}

@@ -101,6 +101,15 @@ func (a *Analytics) TrackSessionConnected(sessionID string, props map[string]int
 	a.capture(EventSessionConnected, sessionID, properties)
 }
 
+// TrackSessionConnectedWithInfo tracks session with full SessionInfo
+func (a *Analytics) TrackSessionConnectedWithInfo(sessionInfo SessionInfo) {
+	properties := posthog.NewProperties()
+	for k, v := range sessionInfo.ToMap() {
+		properties.Set(k, v)
+	}
+	a.capture(EventSessionConnected, sessionInfo.SessionHash, properties)
+}
+
 // TrackSessionDisconnected tracks when a user disconnects
 func (a *Analytics) TrackSessionDisconnected(sessionID string, durationMs int64) {
 	a.capture(EventSessionDisconnected, sessionID, posthog.NewProperties().
