@@ -1,0 +1,25 @@
+README.md
+  d44c87afc1dad5b1 3,6,9-17,20,22-25,31-49,73,85,88,91,94-95,97,107-109,111-126,128-135,139-141,143-156,158-170,173-177,180,182,184,186,188-192,194,196-199,201,203,205-216,219-223,225-233,235,237-252,254,257,259-263,266-279,281-283,285,287-289
+.env.example
+  d44c87afc1dad5b1 1-4,6-14,16-17,19-20,23-28,30,32-33,35-36,38-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "7538646466c107e7077e614b5d3701654cdc33e1",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 258,
+      "total_deletions": 76,
+      "accepted_lines": 253,
+      "overriden_lines": 3
+    }
+  }
+}
