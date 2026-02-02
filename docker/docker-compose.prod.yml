@@ -1,8 +1,6 @@
 # Production docker-compose
 # Uses pre-built images from GitHub Container Registry
 
-version: "3.9"
-
 services:
   ai-gateway:
     image: ${AI_IMAGE:-ghcr.io/mohakbajaj/mohak.tui/ai-gateway:latest}
