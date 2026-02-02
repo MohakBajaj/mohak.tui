@@ -1,0 +1,27 @@
+README.md
+  d44c87afc1dad5b1 278-279,308,313,316,318-326,330,332-338,340-344,388-389
+scripts/setup-server.sh
+  d44c87afc1dad5b1 8,69,87,89-90,105-112
+.github/workflows/deploy.yml
+  d44c87afc1dad5b1 100-107,115-116,128,130-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "64f9277c0f09c7949dbc08ad599004654af628ed",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 155,
+      "total_deletions": 118,
+      "accepted_lines": 78,
+      "overriden_lines": 1
+    }
+  }
+}
