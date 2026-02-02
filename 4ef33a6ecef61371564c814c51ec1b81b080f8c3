@@ -1,0 +1,27 @@
+apps/tui-server/internal/theme/theme.go
+  d44c87afc1dad5b1 7,27-33,35-36,38,40-52,54-57,174,218,227,234,239
+apps/tui-server/internal/ui/views.go
+  d44c87afc1dad5b1 26,32-33,35-36,48,53-54,78-81,83-88,91-98,102,104,106,111-112,115,117-119,121,123,135-137,139-146,148-149,151-164,166-175
+apps/tui-server/internal/app/model.go
+  d44c87afc1dad5b1 132-133,140-142,172,213-215,227-265,267-279,286-288,385,536,538,544,547,550,553,563-564,568-569,605,612,615,619-620,630-631,636,641,644-645,652,654,656,658-660,662-666,670,673-674
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "4ef33a6ecef61371564c814c51ec1b81b080f8c3",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 405,
+      "total_deletions": 280,
+      "accepted_lines": 219,
+      "overriden_lines": 1
+    }
+  }
+}
