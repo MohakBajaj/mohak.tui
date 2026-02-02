@@ -116,7 +116,11 @@ func NewModel(cfg Config) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(textinput.Blink, func() tea.Msg { return tea.EnableMouseCellMotion() })
+	return tea.Batch(
+		textinput.Blink,
+		tea.EnableBracketedPaste,
+		func() tea.Msg { return tea.EnableMouseCellMotion() },
+	)
 }
 
 type StreamChunkMsg struct {
@@ -163,6 +167,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Handle paste events - pass directly to input
+		if msg.Paste {
+			var inputCmd tea.Cmd
+			m.input, inputCmd = m.input.Update(msg)
+			return m, inputCmd
+		}
 		switch msg.Type {
 		case tea.KeyCtrlC:
 			if m.streamCancel != nil {
