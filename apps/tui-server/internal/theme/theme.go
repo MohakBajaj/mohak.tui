@@ -4,7 +4,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Cyberpunk color palette
+// Cyberpunk color palette - vibrant neon on dark
 var Colors = struct {
 	// Base
 	Background string
@@ -21,28 +21,40 @@ var Colors = struct {
 	Blue       string // Electric blue
 	
 	// UI colors
-	Muted      string
-	Dim        string
-	Border     string
-	Highlight  string
+	Muted       string
+	Dim         string
+	Border      string
+	BorderBright string
+	Highlight   string
+	
+	// Text variants
+	BodyText         string
+	UserText         string
+	AssistantText    string
 }{
-	Background: "#0a0a0f",
-	Foreground: "#c7d5e0",
+	Background: "#0d0d12",
+	Foreground: "#e8f0f8", // Bright white-blue
 	
-	// Neon cyberpunk colors
+	// Neon cyberpunk colors - MORE SATURATED
 	Neon:       "#ff2a6d", // Hot pink
-	Cyan:       "#05d9e8", // Electric cyan
-	Yellow:     "#f9f871", // Neon yellow
-	Green:      "#39ff14", // Matrix green
-	Orange:     "#ff6e27", // Neon orange
-	Red:        "#ff073a", // Neon red
-	Purple:     "#bd00ff", // Electric purple
-	Blue:       "#01c8ee", // Neon blue
+	Cyan:       "#00ffff", // Pure electric cyan
+	Yellow:     "#ffff00", // Pure neon yellow
+	Green:      "#00ff41", // Matrix green (brighter)
+	Orange:     "#ff9500", // Bright neon orange
+	Red:        "#ff0055", // Neon red
+	Purple:     "#bf00ff", // Electric purple
+	Blue:       "#00d4ff", // Bright neon blue
 	
-	Muted:      "#5a6270",
-	Dim:        "#2d3138",
-	Border:     "#1a1d23",
-	Highlight:  "#162029",
+	Muted:        "#7a8a9a", // Brighter muted - used for borders
+	Dim:          "#556677", // Cyan-tinted dim
+	Border:       "#2a3040", // Dark border
+	BorderBright: "#446688", // Bright cyan-tinted border
+	Highlight:    "#1a2535", // Deep blue highlight
+	
+	// Text variants
+	BodyText:       "#d0e0f0", // Soft white-blue
+	UserText:       "#c0e8ff", // Light cyan tint
+	AssistantText:  "#e0f0e8", // Light green tint
 }
 
 // Styles contains all lipgloss styles for the TUI
@@ -159,7 +171,7 @@ func (m *Manager) buildStyles() {
 		Bold(true)
 
 	m.styles.Body = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(Colors.Foreground))
+		Foreground(lipgloss.Color(Colors.BodyText))
 
 	m.styles.Muted = lipgloss.NewStyle().
 		Foreground(lipgloss.Color(Colors.Muted))
@@ -203,7 +215,7 @@ func (m *Manager) buildStyles() {
 		Bold(true)
 
 	m.styles.CommandHint = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(Colors.Dim)).
+		Foreground(lipgloss.Color(Colors.Muted)).
 		Italic(true)
 
 	// Chat styles
@@ -212,19 +224,19 @@ func (m *Manager) buildStyles() {
 		Bold(true)
 
 	m.styles.UserMessage = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(Colors.Foreground))
+		Foreground(lipgloss.Color(Colors.UserText))
 
 	m.styles.AssistantLabel = lipgloss.NewStyle().
 		Foreground(lipgloss.Color(Colors.Neon)).
 		Bold(true)
 
 	m.styles.AssistantMessage = lipgloss.NewStyle().
-		Foreground(lipgloss.Color(Colors.Foreground))
+		Foreground(lipgloss.Color(Colors.AssistantText))
 
 	// Component styles
 	m.styles.Border = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color(Colors.Dim))
+		BorderForeground(lipgloss.Color(Colors.BorderBright))
 
 	m.styles.Box = lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).

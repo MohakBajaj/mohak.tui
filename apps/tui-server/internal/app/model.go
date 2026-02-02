@@ -129,9 +129,17 @@ type StreamDoneMsg struct {
 
 type ClearStatusMsg struct{}
 
+type QuitMsg struct{}
+
 func clearStatusAfter(d time.Duration) tea.Cmd {
 	return tea.Tick(d, func(t time.Time) tea.Msg {
 		return ClearStatusMsg{}
+	})
+}
+
+func quitAfter(d time.Duration) tea.Cmd {
+	return tea.Tick(d, func(t time.Time) tea.Msg {
+		return QuitMsg{}
 	})
 }
 
@@ -161,7 +169,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.streamCancel()
 			}
 			m.quitting = true
-			return m, tea.Quit
+			return m, quitAfter(1500 * time.Millisecond)
 
 		case tea.KeyEnter:
 			if m.isStreaming {
@@ -202,8 +210,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		default:
-			// Ctrl+S to toggle mouse (for text selection)
-			if msg.String() == "ctrl+s" {
+			// Keyboard shortcuts (work anytime)
+			switch msg.String() {
+			case "ctrl+s":
 				m.mouseEnabled = !m.mouseEnabled
 				if m.mouseEnabled {
 					m.statusMessage = "Mouse ON (scroll mode)"
@@ -215,11 +224,67 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.statusMessage = "Mouse OFF (select mode)"
 					return m, func() tea.Msg { return tea.DisableMouse() }
 				}
+			case "ctrl+h", "ctrl+/":
+				m.view = ViewHelp
+				m.updateViewport()
+				return m, nil
+			case "ctrl+a":
+				m.view = ViewAbout
+				m.updateViewport()
+				return m, nil
+			case "ctrl+p":
+				m.view = ViewProjects
+				m.selectedProj = ""
+				m.updateViewport()
+				return m, nil
+			case "ctrl+r":
+				m.view = ViewResume
+				m.updateViewport()
+				return m, nil
+			case "ctrl+e":
+				m.view = ViewExperience
+				m.updateViewport()
+				return m, nil
+			case "ctrl+w":
+				// Go home/welcome
+				m.view = ViewChat
+				m.showWelcome = len(m.chatHistory) == 0
+				m.updateViewport()
+				return m, nil
+			case "ctrl+l":
+				// Clear chat
+				m.chatHistory = nil
+				m.showWelcome = true
+				m.view = ViewChat
+				m.errorMessage = ""
+				m.statusMessage = ""
+				m.updateViewport()
+				return m, nil
+			case "ctrl+q":
+				m.quitting = true
+				return m, quitAfter(1500 * time.Millisecond)
+			}
+
+			// Number keys for project selection (only in projects view with empty input)
+			if m.view == ViewProjects && m.input.Value() == "" {
+				switch msg.String() {
+				case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+					idx := int(msg.String()[0] - '1')
+					if idx >= 0 && idx < len(m.projects.Projects) {
+						m.selectedProj = m.projects.Projects[idx].ID
+						m.view = ViewProjectDetail
+						m.updateViewport()
+						return m, nil
+					}
+				}
 			}
 		}
 
 	case ClearStatusMsg:
 		m.statusMessage = ""
+
+	case QuitMsg:
+		return m, tea.Quit
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -317,7 +382,7 @@ func (m Model) handleSlashCommand(input string) (tea.Model, tea.Cmd) {
 		m.statusMessage = ""
 	case "/exit", "/quit", "/q":
 		m.quitting = true
-		return m, tea.Quit
+		return m, quitAfter(1500 * time.Millisecond)
 	case "/back", "/b":
 		m.view = ViewChat
 	default:
@@ -468,24 +533,24 @@ func (m Model) renderQuitScreen() string {
 	styles := m.themeManager.Styles()
 	var b strings.Builder
 
-	border := styles.Dim.Render(strings.Repeat("═", m.width-2))
+	border := styles.Muted.Render(strings.Repeat("═", m.width-2))
 	b.WriteString("\n")
-	b.WriteString(styles.Dim.Render("╔") + border + styles.Dim.Render("╗"))
+	b.WriteString(styles.Yellow.Render("╔") + border + styles.Yellow.Render("╗"))
 	b.WriteString("\n")
 
 	msg := styles.Neon.Bold(true).Render("CONNECTION TERMINATED")
 	msgWidth := lipgloss.Width(msg)
 	pad := (m.width - 4 - msgWidth) / 2
-	b.WriteString(styles.Dim.Render("║ ") + strings.Repeat(" ", pad) + msg + strings.Repeat(" ", m.width-4-pad-msgWidth) + styles.Dim.Render(" ║"))
+	b.WriteString(styles.Muted.Render("║ ") + strings.Repeat(" ", pad) + msg + strings.Repeat(" ", m.width-4-pad-msgWidth) + styles.Muted.Render(" ║"))
 	b.WriteString("\n")
 
-	sub := styles.Muted.Render("// session ended")
+	sub := styles.Yellow.Render("// session ended")
 	subWidth := lipgloss.Width(sub)
 	pad2 := (m.width - 4 - subWidth) / 2
-	b.WriteString(styles.Dim.Render("║ ") + strings.Repeat(" ", pad2) + sub + strings.Repeat(" ", m.width-4-pad2-subWidth) + styles.Dim.Render(" ║"))
+	b.WriteString(styles.Muted.Render("║ ") + strings.Repeat(" ", pad2) + sub + strings.Repeat(" ", m.width-4-pad2-subWidth) + styles.Muted.Render(" ║"))
 	b.WriteString("\n")
 
-	b.WriteString(styles.Dim.Render("╚") + border + styles.Dim.Render("╝"))
+	b.WriteString(styles.Yellow.Render("╚") + border + styles.Yellow.Render("╝"))
 	b.WriteString("\n")
 
 	return b.String()
@@ -495,13 +560,13 @@ func (m Model) renderHeader(styles theme.Styles) string {
 	var b strings.Builder
 	innerWidth := m.width - 4
 
-	// Top border
-	topBorder := styles.Neon.Render("╔") + styles.Neon.Render(strings.Repeat("═", innerWidth+2)) + styles.Neon.Render("╗")
+	// Top border - Yellow corners, Muted lines (cyberpunk!)
+	topBorder := styles.Yellow.Render("╔") + styles.Muted.Render(strings.Repeat("═", innerWidth+2)) + styles.Yellow.Render("╗")
 	b.WriteString(topBorder)
 	b.WriteString("\n")
 
-	// Title bar
-	logo := styles.Neon.Bold(true).Render("▓▒░ MOHAK.SH ░▒▓")
+	// Title bar - Yellow/Neon gradient
+	logo := styles.Yellow.Bold(true).Render("▓▒░") + styles.Neon.Bold(true).Render(" MOHAK.SH ") + styles.Yellow.Bold(true).Render("░▒▓")
 
 	// View indicator
 	viewName := ""
@@ -537,22 +602,22 @@ func (m Model) renderHeader(styles theme.Styles) string {
 		status = styles.Green.Render("◉ ONLINE")
 	}
 
-	viewTag := styles.Dim.Render("[") + viewStyle.Render(viewName) + styles.Dim.Render("]")
+	viewTag := styles.Yellow.Render("[") + viewStyle.Bold(true).Render(viewName) + styles.Yellow.Render("]")
 
 	// Calculate layout
 	logoWidth := lipgloss.Width(logo)
 	viewWidth := lipgloss.Width(viewTag)
 	statusWidth := lipgloss.Width(status)
 	totalContent := logoWidth + viewWidth + statusWidth
-	spacing1 := (innerWidth - totalContent) / 2
+	spacing1 := (innerWidth - totalContent) / 2 - 2
 	spacing2 := innerWidth - logoWidth - spacing1 - viewWidth - statusWidth
 
-	headerLine := styles.Neon.Render("║ ") + logo + strings.Repeat(" ", max(1, spacing1)) + viewTag + strings.Repeat(" ", max(1, spacing2)) + status + styles.Neon.Render(" ║")
+	headerLine := styles.Muted.Render("║ ") + logo + strings.Repeat(" ", max(1, spacing1)) + viewTag + strings.Repeat(" ", max(1, spacing2)) + status + styles.Muted.Render(" ║")
 	b.WriteString(headerLine)
 	b.WriteString("\n")
 
-	// Bottom border with connectors
-	bottomBorder := styles.Dim.Render("╠") + styles.Dim.Render(strings.Repeat("═", innerWidth+2)) + styles.Dim.Render("╣")
+	// Bottom border with connectors - Yellow corners
+	bottomBorder := styles.Yellow.Render("╠") + styles.Muted.Render(strings.Repeat("═", innerWidth+2)) + styles.Yellow.Render("╣")
 	b.WriteString(bottomBorder)
 
 	return b.String()
@@ -562,50 +627,51 @@ func (m Model) renderFooter(styles theme.Styles) string {
 	var b strings.Builder
 	innerWidth := m.width - 4
 
-	// Top border
-	topBorder := styles.Dim.Render("╠") + styles.Dim.Render(strings.Repeat("═", innerWidth+2)) + styles.Dim.Render("╣")
+	// Top border - Yellow corners, Muted lines (consistent with header)
+	topBorder := styles.Yellow.Render("╠") + styles.Muted.Render(strings.Repeat("═", innerWidth+2)) + styles.Yellow.Render("╣")
 	b.WriteString(topBorder)
 	b.WriteString("\n")
 
 	// Input line
-	prompt := styles.Cyan.Bold(true).Render("❯ ")
+	prompt := styles.Yellow.Bold(true).Render("❯ ")
 	inputView := m.input.View()
 	inputLine := prompt + inputView
 	inputWidth := lipgloss.Width(inputLine)
 	inputPad := innerWidth - inputWidth
-	b.WriteString(styles.Dim.Render("║ ") + inputLine + strings.Repeat(" ", max(0, inputPad)) + styles.Dim.Render(" ║"))
+	b.WriteString(styles.Muted.Render("║ ") + inputLine + strings.Repeat(" ", max(0, inputPad)) + styles.Muted.Render(" ║"))
 	b.WriteString("\n")
 
-	// Separator
-	sep := styles.Dim.Render("╟") + styles.Dim.Render(strings.Repeat("─", innerWidth+2)) + styles.Dim.Render("╢")
+	// Separator - Yellow corners
+	sep := styles.Yellow.Render("╟") + styles.Muted.Render(strings.Repeat("─", innerWidth+2)) + styles.Yellow.Render("╢")
 	b.WriteString(sep)
 	b.WriteString("\n")
 
 	// Status/hint line
 	var hint string
 	if m.errorMessage != "" {
-		hint = styles.Red.Render("⚠ ERR: " + m.errorMessage)
+		hint = styles.Red.Bold(true).Render("⚠ ERR: " + m.errorMessage)
 	} else if m.statusMessage != "" {
-		hint = styles.Green.Render("✓ " + m.statusMessage)
+		hint = styles.Green.Bold(true).Render("✓ " + m.statusMessage)
 	} else if m.isStreaming {
-		hint = styles.Neon.Render("▓▒░") + styles.Muted.Render(" streaming ") + styles.Neon.Render("░▒▓") + styles.Dim.Render(" │ ") + styles.Muted.Render("ESC:abort")
+		hint = styles.Neon.Render("▓▒░") + styles.Cyan.Render(" streaming ") + styles.Neon.Render("░▒▓") + styles.Dim.Render(" │ ") + styles.Yellow.Render("ESC") + styles.Dim.Render(" abort")
 	} else if m.view != ViewChat {
-		hint = styles.Muted.Render("ESC:back") + styles.Dim.Render(" │ ") + styles.Cyan.Render("/help")
+		hint = styles.Yellow.Render("ESC") + styles.Dim.Render(" back │ ") +
+			styles.Cyan.Render("^W") + styles.Dim.Render(" home │ ") +
+			styles.Purple.Render("^H") + styles.Dim.Render(" help")
 	} else {
-		hint = styles.Dim.Render("CMD: ") +
-			styles.Green.Render("/about") + styles.Dim.Render(" ") +
-			styles.Yellow.Render("/projects") + styles.Dim.Render(" ") +
-			styles.Orange.Render("/exp") + styles.Dim.Render(" ") +
-			styles.Neon.Render("/resume") + styles.Dim.Render(" ") +
-			styles.Purple.Render("/help")
+		hint = styles.Green.Render("^A") + styles.Dim.Render(" about ") +
+			styles.Yellow.Render("^P") + styles.Dim.Render(" projects ") +
+			styles.Orange.Render("^E") + styles.Dim.Render(" exp ") +
+			styles.Neon.Render("^R") + styles.Dim.Render(" resume ") +
+			styles.Purple.Render("^H") + styles.Dim.Render(" help")
 	}
 	hintWidth := lipgloss.Width(hint)
 	hintPad := innerWidth - hintWidth
-	b.WriteString(styles.Dim.Render("║ ") + hint + strings.Repeat(" ", max(0, hintPad)) + styles.Dim.Render(" ║"))
+	b.WriteString(styles.Muted.Render("║ ") + hint + strings.Repeat(" ", max(0, hintPad)) + styles.Muted.Render(" ║"))
 	b.WriteString("\n")
 
-	// Bottom border
-	bottomBorder := styles.Dim.Render("╚") + styles.Dim.Render(strings.Repeat("═", innerWidth+2)) + styles.Dim.Render("╝")
+	// Bottom border - Yellow corners, Muted lines
+	bottomBorder := styles.Yellow.Render("╚") + styles.Muted.Render(strings.Repeat("═", innerWidth+2)) + styles.Yellow.Render("╝")
 	b.WriteString(bottomBorder)
 
 	return b.String()

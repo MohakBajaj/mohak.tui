@@ -23,17 +23,17 @@ func box(title string, content []string, styles theme.Styles, width int) string 
 	boxWidth := min(60, width-8)
 	innerWidth := boxWidth - 4
 
-	// Top border with title
+	// Top border with title - Yellow corners, Muted lines (cyberpunk!)
 	titleLen := min(len(title), innerWidth-4)
 	titlePad := (innerWidth - titleLen) / 2
 	if titlePad < 1 {
 		titlePad = 1
 	}
-	top := styles.Cyan.Render("┌") +
-		styles.Dim.Render(strings.Repeat("─", titlePad)) +
+	top := styles.Yellow.Render("┌") +
+		styles.Muted.Render(strings.Repeat("─", titlePad)) +
 		styles.Cyan.Bold(true).Render(" "+title[:min(len(title), titleLen)]+" ") +
-		styles.Dim.Render(strings.Repeat("─", max(1, innerWidth-titlePad-titleLen))) +
-		styles.Cyan.Render("┐")
+		styles.Muted.Render(strings.Repeat("─", max(1, innerWidth-titlePad-titleLen))) +
+		styles.Yellow.Render("┐")
 	b.WriteString(center(top, width))
 	b.WriteString("\n")
 
@@ -45,13 +45,13 @@ func box(title string, content []string, styles theme.Styles, width int) string 
 			// Line too long, it will overflow but we can't easily truncate styled text
 			padding = 0
 		}
-		row := styles.Dim.Render("│ ") + line + strings.Repeat(" ", padding) + styles.Dim.Render(" │")
+		row := styles.Muted.Render("│ ") + line + strings.Repeat(" ", padding) + styles.Muted.Render(" │")
 		b.WriteString(center(row, width))
 		b.WriteString("\n")
 	}
 
-	// Bottom border
-	bottom := styles.Cyan.Render("└") + styles.Dim.Render(strings.Repeat("─", innerWidth+2)) + styles.Cyan.Render("┘")
+	// Bottom border - Yellow corners
+	bottom := styles.Yellow.Render("└") + styles.Muted.Render(strings.Repeat("─", innerWidth+2)) + styles.Yellow.Render("┘")
 	b.WriteString(center(bottom, width))
 
 	return b.String()
@@ -75,42 +75,52 @@ func min(a, b int) int {
 func WelcomeMessage(styles theme.Styles, width int) string {
 	var b strings.Builder
 
-	// Glitch-style ASCII banner
+	// "WELCOME TO" text - Yellow accent
+	welcomeText := styles.Yellow.Render("░▒▓") + styles.Muted.Render(" WELCOME TO ") + styles.Yellow.Render("▓▒░")
+
+	// Chunky blocky ASCII banner - cyberpunk style
 	banner := []string{
-		"╔╦╗╔═╗╦ ╦╔═╗╦╔═ ╔═╗╦ ╦",
-		"║║║║ ║╠═╣╠═╣╠╩╗ ╚═╗╠═╣",
-		"╩ ╩╚═╝╩ ╩╩ ╩╩ ╩o╚═╝╩ ╩",
+		"███╗   ███╗ ██████╗ ██╗  ██╗ █████╗ ██╗  ██╗",
+		"████╗ ████║██╔═══██╗██║  ██║██╔══██╗██║ ██╔╝",
+		"██╔████╔██║██║   ██║███████║███████║█████╔╝ ",
+		"██║╚██╔╝██║██║   ██║██╔══██║██╔══██║██╔═██╗ ",
+		"██║ ╚═╝ ██║╚██████╔╝██║  ██║██║  ██║██║  ██╗",
+		"╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝",
+	}
+
+	// Cyberpunk gradient: Yellow -> Neon -> Cyan
+	bannerStyles := []lipgloss.Style{
+		styles.Yellow,
+		styles.Neon,
+		styles.Neon,
+		styles.Cyan,
+		styles.Cyan,
+		styles.Yellow,
 	}
 
 	b.WriteString("\n\n")
+	b.WriteString(center(welcomeText, width))
+	b.WriteString("\n\n")
+
 	for i, line := range banner {
-		var style lipgloss.Style
-		switch i % 3 {
-		case 0:
-			style = styles.Neon
-		case 1:
-			style = styles.Cyan
-		case 2:
-			style = styles.Neon
-		}
-		b.WriteString(center(style.Bold(true).Render(line), width))
+		b.WriteString(center(bannerStyles[i].Bold(true).Render(line), width))
 		b.WriteString("\n")
 	}
 
 	b.WriteString("\n")
-	b.WriteString(center(styles.Dim.Render("▓▒░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▓"), width))
+	tagline := styles.Yellow.Render("▓▒░") + styles.Cyan.Render(" FULL STACK ARCHITECT & DEVOPS ") + styles.Yellow.Render("░▒▓")
+	b.WriteString(center(tagline, width))
 	b.WriteString("\n\n")
 
-	// Command hints in a box
+	// Command hints in a box with shortcuts
 	cmdLines := []string{
-		styles.Green.Render("/about") + styles.Dim.Render("    ─ ") + styles.Muted.Render("view profile data"),
-		styles.Yellow.Render("/projects") + styles.Dim.Render(" ─ ") + styles.Muted.Render("browse projects"),
-		styles.Neon.Render("/resume") + styles.Dim.Render("   ─ ") + styles.Muted.Render("credentials file"),
-		styles.Purple.Render("/help") + styles.Dim.Render("     ─ ") + styles.Muted.Render("system commands"),
+		styles.Green.Bold(true).Render("^A") + styles.Dim.Render(" about") + styles.Yellow.Render("  │ ") + styles.Yellow.Bold(true).Render("^P") + styles.Dim.Render(" projects"),
+		styles.Neon.Bold(true).Render("^R") + styles.Dim.Render(" resume") + styles.Yellow.Render(" │ ") + styles.Orange.Bold(true).Render("^E") + styles.Dim.Render(" experience"),
+		styles.Purple.Bold(true).Render("^H") + styles.Dim.Render(" help") + styles.Yellow.Render("   │ ") + styles.Red.Bold(true).Render("^Q") + styles.Dim.Render(" quit"),
 		"",
-		styles.Cyan.Render("or just type to chat with AI"),
+		styles.Cyan.Render("just start typing to chat with AI"),
 	}
-	b.WriteString(box("COMMANDS", cmdLines, styles, width))
+	b.WriteString(box("SHORTCUTS", cmdLines, styles, width))
 	b.WriteString("\n")
 
 	return b.String()
@@ -122,27 +132,47 @@ func Help(styles theme.Styles, width int) string {
 
 	b.WriteString("\n")
 
-	commands := []string{
-		styles.Purple.Bold(true).Render("/help") + styles.Dim.Render("     ─── ") + styles.Muted.Render("show this help"),
-		styles.Green.Bold(true).Render("/about") + styles.Dim.Render("    ─── ") + styles.Muted.Render("about me"),
-		styles.Yellow.Bold(true).Render("/projects") + styles.Dim.Render(" ─── ") + styles.Muted.Render("list projects"),
-		styles.Yellow.Bold(true).Render("/open <id>") + styles.Dim.Render("─── ") + styles.Muted.Render("view project"),
-		styles.Orange.Bold(true).Render("/exp") + styles.Dim.Render("      ─── ") + styles.Muted.Render("work experience"),
-		styles.Neon.Bold(true).Render("/resume") + styles.Dim.Render("   ─── ") + styles.Muted.Render("full resume"),
-		styles.Cyan.Bold(true).Render("/clear") + styles.Dim.Render("    ─── ") + styles.Muted.Render("clear chat"),
-		styles.Red.Bold(true).Render("/exit") + styles.Dim.Render("     ─── ") + styles.Muted.Render("disconnect"),
+	// Keyboard shortcuts
+	shortcuts := []string{
+		styles.Yellow.Bold(true).Render("SHORTCUTS"),
 		"",
-		styles.Dim.Render("─────────────────────────────────"),
-		"",
-		styles.Cyan.Render("ESC") + styles.Dim.Render("       ─── ") + styles.Muted.Render("go back / cancel"),
-		styles.Cyan.Render("ENTER") + styles.Dim.Render("     ─── ") + styles.Muted.Render("send message"),
-		styles.Green.Render("Ctrl+S") + styles.Dim.Render("    ─── ") + styles.Muted.Render("toggle mouse/select"),
+		styles.Purple.Bold(true).Render("^H") + styles.Dim.Render(" ") + styles.Muted.Render("help (this)"),
+		styles.Green.Bold(true).Render("^A") + styles.Dim.Render(" ") + styles.Muted.Render("about / profile"),
+		styles.Yellow.Bold(true).Render("^P") + styles.Dim.Render(" ") + styles.Muted.Render("projects list"),
+		styles.Orange.Bold(true).Render("^E") + styles.Dim.Render(" ") + styles.Muted.Render("experience"),
+		styles.Neon.Bold(true).Render("^R") + styles.Dim.Render(" ") + styles.Muted.Render("resume"),
+		styles.Cyan.Bold(true).Render("^W") + styles.Dim.Render(" ") + styles.Muted.Render("home / welcome"),
+		styles.Cyan.Bold(true).Render("^L") + styles.Dim.Render(" ") + styles.Muted.Render("clear chat"),
+		styles.Red.Bold(true).Render("^Q") + styles.Dim.Render(" ") + styles.Muted.Render("quit"),
 	}
+	b.WriteString(box("CTRL+KEY", shortcuts, styles, width))
+	b.WriteString("\n")
 
-	b.WriteString(box("SYS_HELP", commands, styles, width))
-	b.WriteString("\n\n")
+	// Slash commands
+	commands := []string{
+		styles.Yellow.Bold(true).Render("SLASH COMMANDS"),
+		"",
+		styles.Purple.Bold(true).Render("/help") + styles.Dim.Render("    ") + styles.Muted.Render("show this help"),
+		styles.Green.Bold(true).Render("/about") + styles.Dim.Render("   ") + styles.Muted.Render("profile & bio"),
+		styles.Yellow.Bold(true).Render("/projects") + styles.Muted.Render("browse projects"),
+		styles.Yellow.Bold(true).Render("/open <n>") + styles.Muted.Render("view project #n"),
+		styles.Neon.Bold(true).Render("/resume") + styles.Dim.Render("  ") + styles.Muted.Render("credentials"),
+		styles.Cyan.Bold(true).Render("/clear") + styles.Dim.Render("   ") + styles.Muted.Render("reset chat"),
+		styles.Red.Bold(true).Render("/exit") + styles.Dim.Render("    ") + styles.Muted.Render("disconnect"),
+	}
+	b.WriteString(box("COMMANDS", commands, styles, width))
+	b.WriteString("\n")
 
-	b.WriteString(center(styles.Dim.Render("// type anything to chat with AI"), width))
+	// System keys
+	sysKeys := []string{
+		styles.Yellow.Bold(true).Render("OTHER KEYS"),
+		"",
+		styles.Cyan.Bold(true).Render("ESC") + styles.Dim.Render("    ") + styles.Muted.Render("back / cancel"),
+		styles.Cyan.Bold(true).Render("ENTER") + styles.Dim.Render("  ") + styles.Muted.Render("send message"),
+		styles.Green.Bold(true).Render("^S") + styles.Dim.Render("     ") + styles.Muted.Render("toggle mouse"),
+		styles.Yellow.Bold(true).Render("1-9") + styles.Dim.Render("    ") + styles.Muted.Render("select project"),
+	}
+	b.WriteString(box("KEYS", sysKeys, styles, width))
 	b.WriteString("\n")
 
 	return b.String()
