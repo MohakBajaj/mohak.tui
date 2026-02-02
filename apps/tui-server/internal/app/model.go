@@ -67,8 +67,9 @@ type Model struct {
 	chunkChan    chan string
 	errChan      chan error
 
-	mouseEnabled bool
-	quitting     bool
+	mouseEnabled  bool
+	quitting      bool
+	startupPhase  int // 0=connecting, 1=syncing, 2=online
 }
 
 // Config holds initialization options
@@ -86,6 +87,7 @@ type Config struct {
 // NewModel creates a new app model
 func NewModel(cfg Config) Model {
 	input := textinput.New()
+	input.Prompt = ""
 	input.Placeholder = "enter command or chat..."
 	input.Focus()
 	input.CharLimit = 1000
@@ -120,6 +122,7 @@ func (m Model) Init() tea.Cmd {
 		textinput.Blink,
 		tea.EnableBracketedPaste,
 		func() tea.Msg { return tea.EnableMouseCellMotion() },
+		startupTick(), // Start the connection animation
 	)
 }
 
@@ -135,6 +138,8 @@ type ClearStatusMsg struct{}
 
 type QuitMsg struct{}
 
+type StartupTickMsg struct{}
+
 func clearStatusAfter(d time.Duration) tea.Cmd {
 	return tea.Tick(d, func(t time.Time) tea.Msg {
 		return ClearStatusMsg{}
@@ -144,6 +149,12 @@ func clearStatusAfter(d time.Duration) tea.Cmd {
 func quitAfter(d time.Duration) tea.Cmd {
 	return tea.Tick(d, func(t time.Time) tea.Msg {
 		return QuitMsg{}
+	})
+}
+
+func startupTick() tea.Cmd {
+	return tea.Tick(300*time.Millisecond, func(t time.Time) tea.Msg {
+		return StartupTickMsg{}
 	})
 }
 
@@ -292,6 +303,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ClearStatusMsg:
 		m.statusMessage = ""
+
+	case StartupTickMsg:
+		// Animate: CONNECTING (0) → SYNCING (1) → ONLINE (2)
+		if m.startupPhase < 2 {
+			m.startupPhase++
+			return m, startupTick()
+		}
+		// Animation complete, stay at ONLINE
 
 	case QuitMsg:
 		return m, tea.Quit
@@ -576,7 +595,7 @@ func (m Model) renderHeader(styles theme.Styles) string {
 	b.WriteString("\n")
 
 	// Title bar - Yellow/Neon gradient
-	logo := styles.Yellow.Bold(true).Render("▓▒░") + styles.Neon.Bold(true).Render(" MOHAK.SH ") + styles.Yellow.Bold(true).Render("░▒▓")
+	logo := styles.Yellow.Bold(true).Render("▓▒░") + styles.Neon.Bold(true).Render(" BMOHAK.XYZ ") + styles.Yellow.Bold(true).Render("░▒▓")
 
 	// View indicator
 	viewName := ""
@@ -606,7 +625,11 @@ func (m Model) renderHeader(styles theme.Styles) string {
 	}
 
 	status := ""
-	if m.isStreaming {
+	if m.startupPhase == 0 {
+		status = styles.Yellow.Render("◌ CONNECTING")
+	} else if m.startupPhase == 1 {
+		status = styles.Cyan.Render("◎ SYNCING")
+	} else if m.isStreaming {
 		status = styles.Neon.Render("◉ STREAMING")
 	} else {
 		status = styles.Green.Render("◉ ONLINE")

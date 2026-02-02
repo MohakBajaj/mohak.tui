@@ -3,7 +3,7 @@
 A cyberpunk-themed SSH-accessible terminal portfolio built with Go, Bubble Tea, and Wish.
 
 ```bash
-ssh mohak.sh
+ssh bmohak.xyz
 ```
 
 ## Tech Stack

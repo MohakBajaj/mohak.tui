@@ -108,7 +108,7 @@ func WelcomeMessage(styles theme.Styles, width int) string {
 	}
 
 	b.WriteString("\n")
-	tagline := styles.Yellow.Render("▓▒░") + styles.Cyan.Render(" FULL STACK ARCHITECT & DEVOPS ") + styles.Yellow.Render("░▒▓")
+	tagline := styles.Yellow.Render("▓▒░") + styles.Cyan.Render(" FULL STACK · SYSTEMS · AI · DEVOPS ") + styles.Yellow.Render("░▒▓")
 	b.WriteString(center(tagline, width))
 	b.WriteString("\n\n")
 
