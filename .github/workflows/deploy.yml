@@ -97,14 +97,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare server directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            mkdir -p ~/mohak-tui
+
       - name: Copy files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "docker/docker-compose.prod.yml"
-          target: "/opt/mohak-tui/"
+          source: "docker/docker-compose.prod.yml,.env.example"
+          target: "~/mohak-tui/"
           strip_components: 1
 
       - name: Deploy via SSH
@@ -116,35 +125,41 @@ jobs:
           envs: TUI_IMAGE,AI_IMAGE
           script: |
             set -e
-            cd /opt/mohak-tui
-            
+            cd ~/mohak-tui
+
+            echo "▶ Setting up .env if needed..."
+            if [ ! -f .env ]; then
+              cp .env.example .env
+              echo "⚠ Created .env from .env.example - please configure it!"
+            fi
+
             echo "▶ Logging into GitHub Container Registry..."
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
-            
+
             echo "▶ Pulling latest images..."
             docker pull ${{ env.TUI_IMAGE }}:latest
             docker pull ${{ env.AI_IMAGE }}:latest
-            
+
             echo "▶ Stopping existing containers..."
             docker compose -f docker-compose.prod.yml down || true
-            
+
             echo "▶ Starting services with new images..."
             export TUI_IMAGE="${{ env.TUI_IMAGE }}:latest"
             export AI_IMAGE="${{ env.AI_IMAGE }}:latest"
             docker compose -f docker-compose.prod.yml up -d
-            
+
             echo "▶ Cleaning up old images..."
             docker image prune -f
-            
+
             echo "▶ Waiting for health checks..."
             sleep 15
-            
+
             echo "▶ Checking service status..."
             docker compose -f docker-compose.prod.yml ps
-            
+
             echo "▶ Verifying AI Gateway health..."
             curl -f http://localhost:3001/health || exit 1
-            
+
             echo "✓ Deployment complete!"
 
       - name: Deployment Summary

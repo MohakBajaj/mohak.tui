@@ -275,11 +275,8 @@ ssh -p 2222 localhost
 # Run setup script on fresh server
 curl -fsSL https://raw.githubusercontent.com/mohakbajaj/mohak-tui/main/scripts/setup-server.sh | bash
 
-# Configure
-sudo nano /opt/mohak-tui/.env
-
-# Copy docker-compose
-sudo cp docker-compose.yml /opt/mohak-tui/
+# Configure environment
+nano ~/mohak-tui/.env
 
 # Start
 sudo systemctl start mohak-tui
@@ -308,23 +305,43 @@ docker compose -f docker/docker-compose.prod.yml up -d
 
 The repository includes CI/CD workflows:
 
-- **CI** (`.github/workflows/ci.yml`) - Runs on every PR
+- **CI** (`.github/workflows/ci.yml`) - Runs on push to main / PRs
   - Lints TypeScript
   - Builds Go binary
   - Builds Docker images
 
-- **Deploy** (`.github/workflows/deploy.yml`) - Runs on tags
+- **Deploy** (`.github/workflows/deploy.yml`) - Runs on tags (`v*`) or manual trigger
   - Builds multi-arch images (amd64/arm64)
   - Pushes to GitHub Container Registry
-  - Deploys to production server via SSH
+  - Deploys to `~/mohak-tui` on production server via SSH
+
+**To trigger deployment:**
+
+```bash
+# Create and push a tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# Or manually from GitHub Actions UI
+```
 
 **Required Secrets:**
 
-| Secret           | Description                |
-| ---------------- | -------------------------- |
-| `DEPLOY_HOST`    | Production server hostname |
-| `DEPLOY_USER`    | SSH username               |
-| `DEPLOY_SSH_KEY` | SSH private key            |
+| Secret           | Description                    |
+| ---------------- | ------------------------------ |
+| `DEPLOY_HOST`    | Production server hostname/IP  |
+| `DEPLOY_USER`    | SSH username                   |
+| `DEPLOY_SSH_KEY` | SSH private key (full content) |
+
+**First-time server setup:**
+
+After first deployment, SSH into your server and configure:
+
+```bash
+ssh user@your-server
+cd ~/mohak-tui
+nano .env  # Add AI_GATEWAY_API_KEY and other secrets
+```
 
 ### Production Configuration
 
@@ -368,7 +385,8 @@ nc -z localhost 2222
 
 ```bash
 # View logs
-docker compose logs -f
+cd ~/mohak-tui
+docker compose -f docker-compose.prod.yml logs -f
 
 # JSON logs can be shipped to:
 # - Datadog

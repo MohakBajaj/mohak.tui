@@ -5,7 +5,7 @@ set -euo pipefail
 # Run this on a fresh Ubuntu/Debian server
 
 REPO_URL="https://github.com/mohakbajaj/mohak-tui.git"
-INSTALL_DIR="/opt/mohak-tui"
+INSTALL_DIR="$HOME/mohak-tui"
 
 echo "═══════════════════════════════════════════════"
 echo "  mohak.sh Server Setup"
@@ -47,8 +47,6 @@ if [[ -d "$INSTALL_DIR" ]]; then
     git pull origin main
 else
     echo "Cloning repository..."
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo chown $USER:$USER "$INSTALL_DIR"
     git clone "$REPO_URL" "$INSTALL_DIR"
     cd "$INSTALL_DIR"
 fi
@@ -68,7 +66,7 @@ fi
 echo ""
 echo "▶ Configuring firewall..."
 if command -v ufw &> /dev/null; then
-    sudo ufw allow 22/tcp comment "SSH"
+    sudo ufw allow 22/tcp comment "SSH/TUI"
     sudo ufw allow 80/tcp comment "HTTP"
     sudo ufw allow 443/tcp comment "HTTPS"
     sudo ufw --force enable
@@ -86,9 +84,10 @@ After=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+User=$USER
 WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/bin/docker compose up -d
-ExecStop=/usr/bin/docker compose down
+ExecStart=/usr/bin/docker compose -f docker/docker-compose.prod.yml up -d
+ExecStop=/usr/bin/docker compose -f docker/docker-compose.prod.yml down
 TimeoutStartSec=300
 
 [Install]
@@ -103,7 +102,12 @@ echo "════════════════════════�
 echo "  Server Setup Complete!"
 echo ""
 echo "  Next steps:"
-echo "  1. Edit $INSTALL_DIR/.env with your API keys"
-echo "  2. Run: sudo systemctl start mohak-tui"
-echo "  3. Test: ssh -p 22 localhost"
+echo "  1. Edit $INSTALL_DIR/.env with your API keys:"
+echo "     nano $INSTALL_DIR/.env"
+echo ""
+echo "  2. Start the service:"
+echo "     sudo systemctl start mohak-tui"
+echo ""
+echo "  3. Test connection:"
+echo "     ssh -p 22 localhost"
 echo "═══════════════════════════════════════════════"
