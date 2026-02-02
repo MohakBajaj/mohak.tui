@@ -1,0 +1,57 @@
+docker/ai-gateway.Dockerfile
+  d44c87afc1dad5b1 1-54
+.github/workflows/deploy.yml
+  d44c87afc1dad5b1 1-109,111-113,115-117,119-121,123-124,126-136
+docker/docker-compose.prod.yml
+  d44c87afc1dad5b1 1-32,34-98
+scripts/deploy.sh
+  d44c87afc1dad5b1 1-89
+.dockerignore
+  d44c87afc1dad5b1 1-55
+docker-compose.yml
+  d44c87afc1dad5b1 1-32,34-87
+.github/workflows/ci.yml
+  d44c87afc1dad5b1 1-103
+README.md
+  d44c87afc1dad5b1 1,6,254,257-266,268-269,272,274-276,278-279,281-282,284-285,288,290,293-323,325-339,341-350,352-381,383-406,408-416
+scripts/setup-server.sh
+  d44c87afc1dad5b1 1-109
+CLAUDE.md
+  d44c87afc1dad5b1 90,123,171,177
+  01cdfa6dc8926906 8,37-38,48-50,92,94-97,99-103,114,120-122,124-135,143-144,152-170,172-176,178-179,184,190
+docker/tui-server.Dockerfile
+  d44c87afc1dad5b1 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "871da17bb514095960f8a745d9abc162e4885e81",
+  "prompts": {
+    "01cdfa6dc8926906": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "621097cb-810e-4585-8885-a05688ca7773",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 69,
+      "total_deletions": 11,
+      "accepted_lines": 63,
+      "overriden_lines": 0
+    },
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 1127,
+      "total_deletions": 107,
+      "accepted_lines": 1052,
+      "overriden_lines": 5
+    }
+  }
+}
