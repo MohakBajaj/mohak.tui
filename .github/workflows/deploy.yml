@@ -17,8 +17,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  TUI_IMAGE: ghcr.io/${{ github.repository }}/tui-server
-  AI_IMAGE: ghcr.io/${{ github.repository }}/ai-gateway
 
 jobs:
   # Build and push Docker images to GitHub Container Registry
@@ -29,10 +27,17 @@ jobs:
       contents: read
       packages: write
     outputs:
-      tui_tag: ${{ steps.meta-tui.outputs.version }}
-      ai_tag: ${{ steps.meta-ai.outputs.version }}
+      tui_image: ${{ steps.set-images.outputs.tui_image }}
+      ai_image: ${{ steps.set-images.outputs.ai_image }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set image names (lowercase)
+        id: set-images
+        run: |
+          REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "tui_image=ghcr.io/${REPO_LC}/tui-server" >> $GITHUB_OUTPUT
+          echo "ai_image=ghcr.io/${REPO_LC}/ai-gateway" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -48,7 +53,7 @@ jobs:
         id: meta-tui
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.TUI_IMAGE }}
+          images: ${{ steps.set-images.outputs.tui_image }}
           tags: |
             type=semver,pattern={{version}}
             type=sha,prefix=
@@ -58,7 +63,7 @@ jobs:
         id: meta-ai
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.AI_IMAGE }}
+          images: ${{ steps.set-images.outputs.ai_image }}
           tags: |
             type=semver,pattern={{version}}
             type=sha,prefix=
@@ -131,10 +136,13 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: TUI_IMAGE,AI_IMAGE
           script: |
             set -e
             cd ~/mohak-tui
+
+            # Image names
+            TUI_IMAGE="${{ needs.build-push.outputs.tui_image }}:latest"
+            AI_IMAGE="${{ needs.build-push.outputs.ai_image }}:latest"
 
             echo "▶ Setting up .env if needed..."
             if [ ! -f .env ]; then
@@ -143,18 +151,18 @@ jobs:
             fi
 
             echo "▶ Logging into GitHub Container Registry..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
 
             echo "▶ Pulling latest images..."
-            docker pull ${{ env.TUI_IMAGE }}:latest
-            docker pull ${{ env.AI_IMAGE }}:latest
+            docker pull $TUI_IMAGE
+            docker pull $AI_IMAGE
 
             echo "▶ Stopping existing containers..."
             docker compose -f docker-compose.prod.yml down || true
 
             echo "▶ Starting services with new images..."
-            export TUI_IMAGE="${{ env.TUI_IMAGE }}:latest"
-            export AI_IMAGE="${{ env.AI_IMAGE }}:latest"
+            export TUI_IMAGE
+            export AI_IMAGE
             docker compose -f docker-compose.prod.yml up -d
 
             echo "▶ Cleaning up old images..."
@@ -177,7 +185,7 @@ jobs:
           echo "═══════════════════════════════════════════════"
           echo "  Deployment Successful!"
           echo "═══════════════════════════════════════════════"
-          echo "  TUI Image: ${{ env.TUI_IMAGE }}:latest"
-          echo "  AI Image: ${{ env.AI_IMAGE }}:latest"
+          echo "  TUI Image: ${{ needs.build-push.outputs.tui_image }}:latest"
+          echo "  AI Image: ${{ needs.build-push.outputs.ai_image }}:latest"
           echo "  Server: ${{ secrets.DEPLOY_HOST }}"
           echo "═══════════════════════════════════════════════"

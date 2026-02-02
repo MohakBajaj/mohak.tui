@@ -5,7 +5,7 @@ version: "3.9"
 
 services:
   ai-gateway:
-    image: ${AI_IMAGE:-ghcr.io/mohakbajaj/mohak-tui/ai-gateway:latest}
+    image: ${AI_IMAGE:-ghcr.io/mohakbajaj/mohak.tui/ai-gateway:latest}
     container_name: mohak-ai-gateway
     restart: always
     environment:
@@ -50,7 +50,7 @@ services:
           memory: 128M
 
   tui-server:
-    image: ${TUI_IMAGE:-ghcr.io/mohakbajaj/mohak-tui/tui-server:latest}
+    image: ${TUI_IMAGE:-ghcr.io/mohakbajaj/mohak.tui/tui-server:latest}
     container_name: mohak-tui-server
     restart: always
     ports:
