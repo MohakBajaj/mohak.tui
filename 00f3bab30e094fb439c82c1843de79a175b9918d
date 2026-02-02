@@ -1,0 +1,23 @@
+.github/workflows/deploy.yml
+  d44c87afc1dad5b1 109,115,119-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "00f3bab30e094fb439c82c1843de79a175b9918d",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 2,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
