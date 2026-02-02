@@ -28,7 +28,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -o /build/bin/tui-server .
 
 # Runtime stage
-FROM alpine:3.19
+FROM alpine:3.20
 
 WORKDIR /app
 
@@ -36,12 +36,12 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates tzdata netcat-openbsd
 
 # Create non-root user
-RUN addgroup -g 1000 mohak && \
-    adduser -u 1000 -G mohak -s /bin/sh -D mohak
+RUN addgroup -g 1001 appgroup && \
+    adduser -u 1001 -G appgroup -s /bin/sh -D appuser
 
 # Create directories
 RUN mkdir -p /app/.ssh /app/content && \
-    chown -R mohak:mohak /app
+    chown -R appuser:appgroup /app
 
 # Copy binary
 COPY --from=builder /build/bin/tui-server /app/tui-server
@@ -50,9 +50,9 @@ COPY --from=builder /build/bin/tui-server /app/tui-server
 COPY --from=builder /build/packages/shared-content /app/content
 
 # Set ownership
-RUN chown -R mohak:mohak /app
+RUN chown -R appuser:appgroup /app
 
-USER mohak
+USER appuser
 
 # Environment
 ENV SSH_HOST=0.0.0.0

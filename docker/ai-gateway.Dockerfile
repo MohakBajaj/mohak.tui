@@ -1,7 +1,7 @@
 # AI Gateway Dockerfile
 # Build context should be the repo root
 
-FROM oven/bun:1.1-alpine AS builder
+FROM oven/bun:1.3-alpine AS builder
 
 WORKDIR /app
 
@@ -22,13 +22,13 @@ WORKDIR /app/apps/ai-gateway
 RUN bun build index.ts --outdir=./dist --target=bun
 
 # Runtime stage
-FROM oven/bun:1.1-alpine
+FROM oven/bun:1.3-alpine
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup -g 1000 mohak && \
-    adduser -u 1000 -G mohak -s /bin/sh -D mohak
+# Create non-root user (use different GID/UID to avoid conflicts)
+RUN addgroup -g 1001 appgroup && \
+    adduser -u 1001 -G appgroup -s /bin/sh -D appuser
 
 # Copy built files and dependencies
 COPY --from=builder /app/apps/ai-gateway/dist ./
@@ -37,9 +37,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages ./packages
 
 # Set ownership
-RUN chown -R mohak:mohak /app
+RUN chown -R appuser:appgroup /app
 
-USER mohak
+USER appuser
 
 # Environment
 ENV AI_GATEWAY_PORT=3001
