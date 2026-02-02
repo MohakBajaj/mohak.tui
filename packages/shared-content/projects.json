@@ -7,7 +7,7 @@
       "tech": ["Go", "Bubble Tea", "Wish", "Lip Gloss"],
       "status": "active",
       "links": {
-        "demo": "ssh mohak.sh",
+        "demo": "ssh bmohak.xyz",
         "github": "github.com/mohak-bajaj/mohak-tui"
       }
     },

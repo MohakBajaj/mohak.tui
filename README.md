@@ -1,9 +1,9 @@
-# mohak.sh - SSH TUI Portfolio
+# bmohak.xyz - SSH TUI Portfolio
 
 A cyberpunk-themed SSH-accessible terminal portfolio built with Go, Bubble Tea, and Wish. Features AI-powered chat, full observability with PostHog, and production-grade logging.
 
 ```bash
-ssh mohak.sh
+ssh bmohak.xyz
 ```
 
 ## Features
@@ -251,41 +251,169 @@ The AI assistant (NEURAL) uses intent-aware prompting:
 
 ## Production Deployment
 
-### Build
+### Quick Start with Docker
 
 ```bash
-# Build TUI server
-cd apps/tui-server
-go build -ldflags="-s -w" -o bin/tui-server .
+# Clone repository
+git clone https://github.com/mohakbajaj/mohak-tui.git
+cd mohak-tui
 
-# Build AI gateway (optional, Bun can run .ts directly)
-cd apps/ai-gateway
-bun build index.ts --outdir=./dist --target=bun
-```
+# Configure environment
+cp .env.example .env
+# Edit .env with your AI_GATEWAY_API_KEY
 
-### Systemd Service
-
-```ini
-[Unit]
-Description=mohak.sh TUI Server
-After=network.target
-
-[Service]
-Type=simple
-User=mohak
-WorkingDirectory=/opt/mohak-tui/apps/tui-server
-ExecStart=/opt/mohak-tui/apps/tui-server/bin/tui-server
-Restart=always
-EnvironmentFile=/opt/mohak-tui/.env
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Docker (Coming Soon)
-
-```bash
+# Deploy
 docker compose up -d
+
+# Test
+ssh -p 2222 localhost
+```
+
+### Server Setup (Ubuntu/Debian)
+
+```bash
+# Run setup script on fresh server
+curl -fsSL https://raw.githubusercontent.com/mohakbajaj/mohak-tui/main/scripts/setup-server.sh | bash
+
+# Configure
+sudo nano /opt/mohak-tui/.env
+
+# Copy docker-compose
+sudo cp docker-compose.yml /opt/mohak-tui/
+
+# Start
+sudo systemctl start mohak-tui
+```
+
+### Manual Deployment
+
+**1. Build images locally:**
+
+```bash
+docker compose build
+```
+
+**2. Or use pre-built images:**
+
+```bash
+# Pull from GitHub Container Registry
+docker pull ghcr.io/mohakbajaj/mohak-tui/tui-server:latest
+docker pull ghcr.io/mohakbajaj/mohak-tui/ai-gateway:latest
+
+# Use production compose file
+docker compose -f docker/docker-compose.prod.yml up -d
+```
+
+### CI/CD with GitHub Actions
+
+The repository includes CI/CD workflows:
+
+- **CI** (`.github/workflows/ci.yml`) - Runs on every PR
+  - Lints TypeScript
+  - Builds Go binary
+  - Builds Docker images
+
+- **Deploy** (`.github/workflows/deploy.yml`) - Runs on tags
+  - Builds multi-arch images (amd64/arm64)
+  - Pushes to GitHub Container Registry
+  - Deploys to production server via SSH
+
+**Required Secrets:**
+
+| Secret           | Description                |
+| ---------------- | -------------------------- |
+| `DEPLOY_HOST`    | Production server hostname |
+| `DEPLOY_USER`    | SSH username               |
+| `DEPLOY_SSH_KEY` | SSH private key            |
+
+### Production Configuration
+
+**docker-compose.yml environment:**
+
+```yaml
+services:
+  ai-gateway:
+    environment:
+      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY}
+      - LOG_FORMAT=json # For log aggregation
+      - NODE_ENV=production
+
+  tui-server:
+    ports:
+      - "22:2222" # Use port 22 for production
+    environment:
+      - LOG_FORMAT=json
+```
+
+**Resource limits (recommended):**
+
+| Service    | Memory | CPU |
+| ---------- | ------ | --- |
+| AI Gateway | 512MB  | 1.0 |
+| TUI Server | 256MB  | 0.5 |
+
+### Monitoring
+
+**Health endpoints:**
+
+```bash
+# AI Gateway
+curl http://localhost:3001/health
+
+# TUI Server (via netcat)
+nc -z localhost 2222
+```
+
+**Logs:**
+
+```bash
+# View logs
+docker compose logs -f
+
+# JSON logs can be shipped to:
+# - Datadog
+# - Grafana Loki
+# - ELK Stack
+```
+
+**PostHog Dashboard:**
+
+Events are tracked automatically. Create dashboards for:
+
+- Session duration
+- Views visited
+- Chat usage
+- Error rates
+
+### SSL/TLS (Optional)
+
+For HTTPS on the AI Gateway (if exposed publicly):
+
+```yaml
+# Use Traefik or nginx as reverse proxy
+services:
+  traefik:
+    image: traefik:v2.10
+    ports:
+      - "443:443"
+    # ... traefik config
+```
+
+SSH uses its own encryption - no additional TLS needed.
+
+## Project Scripts
+
+| Script                    | Description               |
+| ------------------------- | ------------------------- |
+| `scripts/deploy.sh`       | Build and deploy locally  |
+| `scripts/setup-server.sh` | Setup fresh Ubuntu server |
+
+```bash
+# Deploy locally
+./scripts/deploy.sh
+
+# Deploy to staging
+./scripts/deploy.sh staging
 ```
 
 ## License

@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+.github
+
+# Node
+node_modules
+.npm
+.yarn
+
+# Build artifacts
+dist
+build
+*.log
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+.cursor
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Tests
+**/*_test.go
+**/*.test.ts
+**/*.spec.ts
+coverage
+.nyc_output
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp
+temp
+*.tmp
+
+# Go
+apps/tui-server/bin
+apps/tui-server/.ssh
+
+# Development
+scripts
+docker-compose.override.yml

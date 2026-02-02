@@ -1,0 +1,136 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  REGISTRY: ghcr.io
+  TUI_IMAGE: ghcr.io/${{ github.repository }}/tui-server
+  AI_IMAGE: ghcr.io/${{ github.repository }}/ai-gateway
+
+jobs:
+  # Build and push Docker images
+  build-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tui_image: ${{ steps.meta-tui.outputs.tags }}
+      ai_image: ${{ steps.meta-ai.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for TUI Server
+        id: meta-tui
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.TUI_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract metadata for AI Gateway
+        id: meta-ai
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.AI_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push TUI Server
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/tui-server.Dockerfile
+          push: true
+          tags: ${{ steps.meta-tui.outputs.tags }}
+          labels: ${{ steps.meta-tui.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push AI Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/ai-gateway.Dockerfile
+          push: true
+          tags: ${{ steps.meta-ai.outputs.tags }}
+          labels: ${{ steps.meta-ai.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # Deploy to production server
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: build-push
+    environment: ${{ inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/mohak-tui
+
+            # Pull latest images
+            docker pull ${{ env.TUI_IMAGE }}:latest
+            docker pull ${{ env.AI_IMAGE }}:latest
+
+            # Update docker-compose with new images
+            export TUI_IMAGE=${{ env.TUI_IMAGE }}:latest
+            export AI_IMAGE=${{ env.AI_IMAGE }}:latest
+
+            # Restart services
+            docker compose down
+            docker compose up -d
+
+            # Cleanup old images
+            docker image prune -f
+
+            # Verify health
+            sleep 10
+            docker compose ps
+            curl -f http://localhost:3001/health || exit 1
+
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "Deployment successful!"
+          echo "TUI Image: ${{ needs.build-push.outputs.tui_image }}"
+          echo "AI Image: ${{ needs.build-push.outputs.ai_image }}"

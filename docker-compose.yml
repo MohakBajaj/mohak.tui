@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  # AI Gateway Service
+  ai-gateway:
+    build:
+      context: .
+      dockerfile: docker/ai-gateway.Dockerfile
+    container_name: mohak-ai-gateway
+    restart: unless-stopped
+    environment:
+      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY}
+      - AI_GATEWAY_MODEL=${AI_GATEWAY_MODEL:-openai/gpt-oss-20b}
+      - AI_GATEWAY_PORT=3001
+      - AI_GATEWAY_RATE_LIMIT=${AI_GATEWAY_RATE_LIMIT:-10}
+      - AI_GATEWAY_MAX_TOKENS=${AI_GATEWAY_MAX_TOKENS:-1024}
+      - AI_TEMPERATURE=${AI_TEMPERATURE:-0.7}
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY:-}
+      - POSTHOG_HOST=${POSTHOG_HOST:-https://us.i.posthog.com}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+      - NODE_ENV=production
+    networks:
+      - mohak-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001/health",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # TUI Server (SSH)
+  tui-server:
+    build:
+      context: .
+      dockerfile: docker/tui-server.Dockerfile
+    container_name: mohak-tui-server
+    restart: unless-stopped
+    ports:
+      - "${SSH_PORT:-2222}:2222"
+    environment:
+      - SSH_HOST=0.0.0.0
+      - SSH_PORT=2222
+      - AI_GATEWAY_URL=http://ai-gateway:3001
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY:-}
+      - POSTHOG_HOST=${POSTHOG_HOST:-https://us.i.posthog.com}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+    volumes:
+      - ssh-keys:/app/.ssh
+    depends_on:
+      ai-gateway:
+        condition: service_healthy
+    networks:
+      - mohak-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2222"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+
+networks:
+  mohak-network:
+    driver: bridge
+
+volumes:
+  ssh-keys:
+    driver: local
