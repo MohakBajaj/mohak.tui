@@ -106,15 +106,24 @@ jobs:
           script: |
             mkdir -p ~/mohak-tui
 
-      - name: Copy files to server
+      - name: Copy compose file to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "docker/docker-compose.prod.yml,.env.example"
+          source: "docker/docker-compose.prod.yml"
           target: "~/mohak-tui/"
           strip_components: 1
+
+      - name: Copy env example to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: ".env.example"
+          target: "~/mohak-tui/"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
