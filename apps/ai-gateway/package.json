@@ -19,6 +19,7 @@
     "@ai-sdk/gateway": "^3.0.32",
     "@mohak/shared-content": "workspace:*",
     "ai": "^6.0.67",
-    "hono": "^4.11.7"
+    "hono": "^4.11.7",
+    "posthog-node": "^5.24.7"
   }
 }

@@ -67,9 +67,19 @@ type Model struct {
 	chunkChan    chan string
 	errChan      chan error
 
-	mouseEnabled  bool
-	quitting      bool
-	startupPhase  int // 0=connecting, 1=syncing, 2=online
+	mouseEnabled bool
+	quitting     bool
+	startupPhase int // 0=connecting, 1=syncing, 2=online
+	analytics    Analytics
+}
+
+// Analytics interface for tracking events
+type Analytics interface {
+	TrackViewChanged(sessionID string, fromView, toView string)
+	TrackCommandExecuted(sessionID string, command string)
+	TrackChatSent(sessionID string, messageLength int)
+	TrackChatReceived(sessionID string, responseLength int, durationMs int64)
+	TrackChatError(sessionID string, errorMsg string)
 }
 
 // Config holds initialization options
@@ -82,6 +92,7 @@ type Config struct {
 	SessionID    string
 	Width        int
 	Height       int
+	Analytics    Analytics
 }
 
 // NewModel creates a new app model
@@ -114,6 +125,7 @@ func NewModel(cfg Config) Model {
 		sessionID:    cfg.SessionID,
 		showWelcome:  true,
 		mouseEnabled: true,
+		analytics:    cfg.Analytics,
 	}
 }
 
@@ -375,6 +387,13 @@ func (m Model) handleSlashCommand(input string) (tea.Model, tea.Cmd) {
 	command := strings.ToLower(parts[0])
 	args := parts[1:]
 
+	// Track command execution
+	if m.analytics != nil {
+		m.analytics.TrackCommandExecuted(m.sessionID, command)
+	}
+
+	oldView := m.view
+
 	switch command {
 	case "/help", "/h", "/?":
 		m.view = ViewHelp
@@ -417,14 +436,49 @@ func (m Model) handleSlashCommand(input string) (tea.Model, tea.Cmd) {
 	default:
 		m.errorMessage = "Unknown command: " + command
 	}
+
+	// Track view change
+	if m.view != oldView && m.analytics != nil {
+		m.analytics.TrackViewChanged(m.sessionID, viewName(oldView), viewName(m.view))
+	}
+
 	m.updateViewport()
 	return m, nil
+}
+
+func viewName(v View) string {
+	switch v {
+	case ViewChat:
+		return "chat"
+	case ViewHelp:
+		return "help"
+	case ViewAbout:
+		return "about"
+	case ViewProjects:
+		return "projects"
+	case ViewProjectDetail:
+		return "project_detail"
+	case ViewResume:
+		return "resume"
+	case ViewExperience:
+		return "experience"
+	default:
+		return "unknown"
+	}
 }
 
 func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
 	if m.aiClient == nil {
 		m.errorMessage = "AI not available"
+		if m.analytics != nil {
+			m.analytics.TrackChatError(m.sessionID, "AI not available")
+		}
 		return m, nil
+	}
+
+	// Track chat sent
+	if m.analytics != nil {
+		m.analytics.TrackChatSent(m.sessionID, len(message))
 	}
 
 	m.view = ViewChat
@@ -450,11 +504,15 @@ func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
 
 	aiClient := m.aiClient
 	sessionID := m.sessionID
+	analytics := m.analytics
+	startTime := time.Now()
 
 	go func() {
 		defer close(chunkChan)
 		defer close(errChan)
+		var totalResponse strings.Builder
 		err := aiClient.ChatStream(ctx, sessionID, message, history, func(chunk string) error {
+			totalResponse.WriteString(chunk)
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
@@ -464,6 +522,11 @@ func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
 		})
 		if err != nil {
 			errChan <- err
+			if analytics != nil {
+				analytics.TrackChatError(sessionID, err.Error())
+			}
+		} else if analytics != nil {
+			analytics.TrackChatReceived(sessionID, totalResponse.Len(), time.Since(startTime).Milliseconds())
 		}
 	}()
 
@@ -642,7 +705,7 @@ func (m Model) renderHeader(styles theme.Styles) string {
 	viewWidth := lipgloss.Width(viewTag)
 	statusWidth := lipgloss.Width(status)
 	totalContent := logoWidth + viewWidth + statusWidth
-	spacing1 := (innerWidth - totalContent) / 2 - 2
+	spacing1 := (innerWidth-totalContent)/2 - 2
 	spacing2 := innerWidth - logoWidth - spacing1 - viewWidth - statusWidth
 
 	headerLine := styles.Muted.Render("║ ") + logo + strings.Repeat(" ", max(1, spacing1)) + viewTag + strings.Repeat(" ", max(1, spacing2)) + status + styles.Muted.Render(" ║")

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,12 +13,12 @@ import (
 	"github.com/charmbracelet/wish"
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
-	"github.com/charmbracelet/wish/logging"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/app"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/client"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/content"
+	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/telemetry"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/theme"
 )
 
@@ -31,33 +30,52 @@ const (
 )
 
 func main() {
+	// Initialize logger
+	logger := telemetry.NewLogger("tui-server")
+
+	// Initialize analytics
+	analytics := telemetry.NewAnalytics(logger)
+	defer analytics.Close()
+
 	// Configuration from environment
 	host := getEnv("SSH_HOST", defaultHost)
 	port := getEnv("SSH_PORT", defaultPort)
 	aiGatewayURL := getEnv("AI_GATEWAY_URL", "http://localhost:3001")
 	contentPath := getEnv("CONTENT_PATH", getContentPath())
 
-	log.Printf("Starting SSH server on %s:%s", host, port)
-	log.Printf("AI Gateway URL: %s", aiGatewayURL)
-	log.Printf("Content path: %s", contentPath)
+	logger.Info("Starting SSH server", telemetry.Ctx(
+		"host", host,
+		"port", port,
+		"aiGateway", aiGatewayURL,
+		"contentPath", contentPath,
+	))
+
+	// Track server start
+	analytics.TrackServerStart(host, port)
 
 	// Load content
 	contentLoader := content.NewLoader(contentPath)
 
 	resume, err := contentLoader.LoadResume()
 	if err != nil {
-		log.Fatalf("Failed to load resume: %v", err)
+		logger.Error("Failed to load resume", telemetry.Ctx("error", err.Error()))
+		os.Exit(1)
 	}
+	logger.Debug("Resume loaded successfully")
 
 	projects, err := contentLoader.LoadProjects()
 	if err != nil {
-		log.Fatalf("Failed to load projects: %v", err)
+		logger.Error("Failed to load projects", telemetry.Ctx("error", err.Error()))
+		os.Exit(1)
 	}
+	logger.Debug("Projects loaded", telemetry.Ctx("count", len(projects.Projects)))
 
 	bio, err := contentLoader.LoadBio()
 	if err != nil {
-		log.Fatalf("Failed to load bio: %v", err)
+		logger.Error("Failed to load bio", telemetry.Ctx("error", err.Error()))
+		os.Exit(1)
 	}
+	logger.Debug("Bio loaded successfully")
 
 	// Create AI client
 	aiClient := client.NewAIClient(aiGatewayURL)
@@ -67,9 +85,9 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := aiClient.Health(ctx); err != nil {
-			log.Printf("Warning: AI gateway not available: %v", err)
+			logger.Warn("AI gateway not available", telemetry.Ctx("error", err.Error()))
 		} else {
-			log.Printf("AI gateway connected")
+			logger.Info("AI gateway connected")
 		}
 	}()
 
@@ -84,10 +102,13 @@ func main() {
 		wish.WithMiddleware(
 			// Bubble Tea middleware
 			bubbletea.Middleware(func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+				sessionStart := time.Now()
+				sessionID := s.RemoteAddr().String()
+
 				// Get terminal size
 				pty, _, active := s.Pty()
 				if !active {
-					log.Printf("No PTY for session %s", s.RemoteAddr())
+					logger.Warn("No PTY for session", telemetry.Ctx("sessionId", sessionID))
 					return nil, nil
 				}
 
@@ -100,13 +121,24 @@ func main() {
 					height = 24
 				}
 
+				logger.Info("Session connected", telemetry.Ctx(
+					"sessionId", sessionID,
+					"terminal", pty.Term,
+					"width", width,
+					"height", height,
+				))
+
+				// Track session
+				analytics.TrackSessionConnected(sessionID, map[string]interface{}{
+					"terminal": pty.Term,
+					"width":    width,
+					"height":   height,
+				})
+
 				// Create session-specific theme manager
 				themeManager := theme.NewManager(width, height)
 
-				// Generate session ID for rate limiting
-				sessionID := s.RemoteAddr().String()
-
-				// Create model
+				// Create model with analytics
 				model := app.NewModel(app.Config{
 					ThemeManager: themeManager,
 					Resume:       resume,
@@ -116,7 +148,19 @@ func main() {
 					SessionID:    sessionID,
 					Width:        width,
 					Height:       height,
+					Analytics:    analytics,
 				})
+
+				// Track disconnect on session end
+				go func() {
+					<-s.Context().Done()
+					duration := time.Since(sessionStart).Milliseconds()
+					logger.Info("Session disconnected", telemetry.Ctx(
+						"sessionId", sessionID,
+						"durationMs", duration,
+					))
+					analytics.TrackSessionDisconnected(sessionID, duration)
+				}()
 
 				return model, []tea.ProgramOption{
 					tea.WithAltScreen(),
@@ -129,7 +173,7 @@ func main() {
 				return func(s ssh.Session) {
 					addr := s.RemoteAddr().String()
 					if !sessionCounter.Acquire(addr) {
-						log.Printf("Rate limited: %s", addr)
+						logger.Warn("Rate limited connection", telemetry.Ctx("addr", addr))
 						s.Write([]byte("Too many sessions from your IP. Please try again later.\n"))
 						s.Exit(1)
 						return
@@ -138,34 +182,48 @@ func main() {
 					next(s)
 				}
 			},
-			// Logging middleware
-			logging.Middleware(),
+			// Custom logging middleware (replaces wish/logging)
+			func(next ssh.Handler) ssh.Handler {
+				return func(s ssh.Session) {
+					logger.Debug("SSH session started", telemetry.Ctx(
+						"addr", s.RemoteAddr().String(),
+						"user", s.User(),
+					))
+					next(s)
+				}
+			},
 		),
 	)
 	if err != nil {
-		log.Fatalf("Failed to create server: %v", err)
+		logger.Error("Failed to create server", telemetry.Ctx("error", err.Error()))
+		os.Exit(1)
 	}
 
 	// Handle graceful shutdown
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("SSH server starting...")
+	logger.Info("SSH server starting...")
 	go func() {
 		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
-			log.Fatalf("Server error: %v", err)
+			logger.Error("Server error", telemetry.Ctx("error", err.Error()))
+			os.Exit(1)
 		}
 	}()
 
-	log.Printf("SSH server ready: ssh -p %s localhost", port)
+	logger.Info("SSH server ready", telemetry.Ctx("command", "ssh -p "+port+" localhost"))
 	<-done
 
-	log.Printf("Shutting down...")
+	logger.Info("Shutting down...")
+	analytics.TrackServerStop()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	if err := s.Shutdown(ctx); err != nil {
-		log.Printf("Shutdown error: %v", err)
+		logger.Error("Shutdown error", telemetry.Ctx("error", err.Error()))
 	}
+
+	logger.Info("Server stopped")
 }
 
 func getEnv(key, defaultValue string) string {
@@ -176,8 +234,6 @@ func getEnv(key, defaultValue string) string {
 }
 
 func getContentPath() string {
-	// Try to find the shared-content package relative to the executable
-	// or use an environment variable
 	paths := []string{
 		"../../packages/shared-content",
 		"../packages/shared-content",
@@ -194,7 +250,6 @@ func getContentPath() string {
 		}
 	}
 
-	// Default fallback
 	return "./packages/shared-content"
 }
 
@@ -212,7 +267,6 @@ func NewSessionCounter(maxPerIP int) *SessionCounter {
 }
 
 func (sc *SessionCounter) Acquire(addr string) bool {
-	// Extract IP from addr (format: "ip:port")
 	ip := addr
 	if colonIdx := len(addr) - 1; colonIdx > 0 {
 		for i := len(addr) - 1; i >= 0; i-- {
