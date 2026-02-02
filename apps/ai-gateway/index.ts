@@ -183,12 +183,6 @@ app.post("/chat", async (c) => {
       topP: 0.9,
       frequencyPenalty: 0.3, // Reduce repetition
       presencePenalty: 0.1, // Encourage topic diversity
-      stopSequences: [
-        "\n\n\n", // Prevent excessive newlines
-        "---END---",
-        "Human:",
-        "User:",
-      ],
       onFinish: async ({ text, usage, finishReason }) => {
         const duration = performance.now() - requestStart;
 
