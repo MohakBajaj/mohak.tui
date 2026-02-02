@@ -21,7 +21,7 @@ env:
   AI_IMAGE: ghcr.io/${{ github.repository }}/ai-gateway
 
 jobs:
-  # Build and push Docker images
+  # Build and push Docker images to GitHub Container Registry
   build-push:
     name: Build & Push Images
     runs-on: ubuntu-latest
@@ -29,8 +29,8 @@ jobs:
       contents: read
       packages: write
     outputs:
-      tui_image: ${{ steps.meta-tui.outputs.tags }}
-      ai_image: ${{ steps.meta-ai.outputs.tags }}
+      tui_tag: ${{ steps.meta-tui.outputs.version }}
+      ai_tag: ${{ steps.meta-ai.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -51,9 +51,8 @@ jobs:
           images: ${{ env.TUI_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Extract metadata for AI Gateway
         id: meta-ai
@@ -62,9 +61,8 @@ jobs:
           images: ${{ env.AI_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Build and push TUI Server
         uses: docker/build-push-action@v5
@@ -99,38 +97,63 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Copy files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "docker/docker-compose.prod.yml"
+          target: "/opt/mohak-tui/"
+          strip_components: 1
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: TUI_IMAGE,AI_IMAGE
           script: |
+            set -e
             cd /opt/mohak-tui
-
-            # Pull latest images
+            
+            echo "▶ Logging into GitHub Container Registry..."
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
+            
+            echo "▶ Pulling latest images..."
             docker pull ${{ env.TUI_IMAGE }}:latest
             docker pull ${{ env.AI_IMAGE }}:latest
-
-            # Update docker-compose with new images
-            export TUI_IMAGE=${{ env.TUI_IMAGE }}:latest
-            export AI_IMAGE=${{ env.AI_IMAGE }}:latest
-
-            # Restart services
-            docker compose down
-            docker compose up -d
-
-            # Cleanup old images
+            
+            echo "▶ Stopping existing containers..."
+            docker compose -f docker-compose.prod.yml down || true
+            
+            echo "▶ Starting services with new images..."
+            export TUI_IMAGE="${{ env.TUI_IMAGE }}:latest"
+            export AI_IMAGE="${{ env.AI_IMAGE }}:latest"
+            docker compose -f docker-compose.prod.yml up -d
+            
+            echo "▶ Cleaning up old images..."
             docker image prune -f
-
-            # Verify health
-            sleep 10
-            docker compose ps
+            
+            echo "▶ Waiting for health checks..."
+            sleep 15
+            
+            echo "▶ Checking service status..."
+            docker compose -f docker-compose.prod.yml ps
+            
+            echo "▶ Verifying AI Gateway health..."
             curl -f http://localhost:3001/health || exit 1
+            
+            echo "✓ Deployment complete!"
 
-      - name: Notify deployment
+      - name: Deployment Summary
         if: success()
         run: |
-          echo "Deployment successful!"
-          echo "TUI Image: ${{ needs.build-push.outputs.tui_image }}"
-          echo "AI Image: ${{ needs.build-push.outputs.ai_image }}"
+          echo "═══════════════════════════════════════════════"
+          echo "  Deployment Successful!"
+          echo "═══════════════════════════════════════════════"
+          echo "  TUI Image: ${{ env.TUI_IMAGE }}:latest"
+          echo "  AI Image: ${{ env.AI_IMAGE }}:latest"
+          echo "  Server: ${{ secrets.DEPLOY_HOST }}"
+          echo "═══════════════════════════════════════════════"
