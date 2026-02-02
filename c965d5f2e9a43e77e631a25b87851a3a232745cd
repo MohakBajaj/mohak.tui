@@ -1,0 +1,27 @@
+apps/tui-server/internal/telemetry/analytics.go
+  d44c87afc1dad5b1 104-112
+apps/tui-server/main.go
+  d44c87afc1dad5b1 16,34-36,111-115,121-122,136-141,143-144,167-170,186,188,201-202,204-210
+apps/tui-server/internal/telemetry/session.go
+  d44c87afc1dad5b1 1-186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "c965d5f2e9a43e77e631a25b87851a3a232745cd",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 237,
+      "total_deletions": 22,
+      "accepted_lines": 231,
+      "overriden_lines": 0
+    }
+  }
+}
