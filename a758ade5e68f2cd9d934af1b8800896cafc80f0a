@@ -1,0 +1,27 @@
+apps/tui-server/internal/ui/views.go
+  d44c87afc1dad5b1 111
+apps/tui-server/internal/app/model.go
+  d44c87afc1dad5b1 72,90,125,141-142,155-157,307-314,628-632
+README.md
+  d44c87afc1dad5b1 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "a758ade5e68f2cd9d934af1b8800896cafc80f0a",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 66,
+      "total_deletions": 31,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    }
+  }
+}
