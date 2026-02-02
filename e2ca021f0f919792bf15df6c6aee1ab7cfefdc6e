@@ -1,0 +1,35 @@
+apps/tui-server/internal/telemetry/logger.go
+  d44c87afc1dad5b1 1-173
+apps/ai-gateway/lib/analytics.ts
+  d44c87afc1dad5b1 1-73,75-177
+apps/tui-server/internal/app/model.go
+  d44c87afc1dad5b1 73,76-82,95,128,390-396,439-442,444,449-467,473-475,479-483,507-508,513,515,525-529
+apps/ai-gateway/index.ts
+  d44c87afc1dad5b1 6-7,52,56,59-61,67-72,74-75,79,82,89-90,101,105-117,122-123,144,151-163,174-200,211-213,215-231
+apps/tui-server/main.go
+  d44c87afc1dad5b1 21,33-39,46-54,61-62,64,68-69,71,75-76,78,88,90,105-107,111,124-136,141,151,154-163,176,185-191,198-199,206,209-210,214,217-219,223,225-226
+apps/ai-gateway/lib/logger.ts
+  d44c87afc1dad5b1 1-60,62-111,113-124
+apps/tui-server/internal/telemetry/analytics.go
+  d44c87afc1dad5b1 1-186
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.40",
+  "base_commit_sha": "e2ca021f0f919792bf15df6c6aee1ab7cfefdc6e",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 1219,
+      "total_deletions": 50,
+      "accepted_lines": 1201,
+      "overriden_lines": 6
+    }
+  }
+}
