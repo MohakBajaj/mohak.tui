@@ -1,0 +1,25 @@
+apps/tui-server/main.go
+  d44c87afc1dad5b1 146-150
+apps/tui-server/internal/theme/theme.go
+  d44c87afc1dad5b1 117,120-122,126,154-161,164,168,172,176,180,184,187,190,193,197,200,203,207-214,217,221,224,228,233,237,240,244,248,252,257,263,267,270,272,275-276
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "f5a39540892409b877d62d44f1c72ae88e465257",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 46,
+      "accepted_lines": 55,
+      "overriden_lines": 0
+    }
+  }
+}
