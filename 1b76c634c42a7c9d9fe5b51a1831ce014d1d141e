@@ -1,0 +1,27 @@
+.github/workflows/deploy.yml
+  d44c87afc1dad5b1 175-176,178-184,187,189-191,194-195,198-201
+docker/ai-gateway.Dockerfile
+  d44c87afc1dad5b1 48
+packages/shared-content/index.ts
+  d44c87afc1dad5b1 10-12,91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.0.42",
+  "base_commit_sha": "1b76c634c42a7c9d9fe5b51a1831ce014d1d141e",
+  "prompts": {
+    "d44c87afc1dad5b1": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "7a1c1e45-eeb1-4e6b-8cc1-079d8fa159fb",
+        "model": "claude-4.5-opus-high-thinking"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 30,
+      "total_deletions": 21,
+      "accepted_lines": 24,
+      "overriden_lines": 0
+    }
+  }
+}
