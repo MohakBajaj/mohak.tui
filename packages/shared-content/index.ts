@@ -7,6 +7,9 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Content path can be overridden via environment variable for containerized deployments
+const CONTENT_PATH = process.env.CONTENT_PATH || __dirname;
+
 export interface Resume {
   name: string;
   title: string;
@@ -85,7 +88,7 @@ export const getProjects = (): Projects => projects as Projects;
 export const getTheme = (): Theme => theme as Theme;
 
 export const getBio = (): string => {
-  return readFileSync(join(__dirname, "bio.md"), "utf-8");
+  return readFileSync(join(CONTENT_PATH, "bio.md"), "utf-8");
 };
 
 /**

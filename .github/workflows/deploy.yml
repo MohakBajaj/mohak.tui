@@ -172,28 +172,33 @@ jobs:
             echo "▶ Cleaning up old images..."
             docker image prune -f
 
-            echo "▶ Waiting for services to start..."
-            sleep 10
-
-            echo "▶ Checking service status..."
-            docker compose -f docker-compose.prod.yml ps
-
-            echo "▶ Verifying AI Gateway health..."
-            # Retry health check up to 6 times (30 seconds total)
+            echo "▶ Waiting for containers to be healthy..."
+            # Wait for Docker health checks (up to 60 seconds)
             for i in 1 2 3 4 5 6; do
-              if curl -sf --max-time 5 http://localhost:3001/health > /dev/null 2>&1; then
-                echo "✓ AI Gateway is healthy"
+              AI_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' mohak-ai-gateway 2>/dev/null || echo "unknown")
+              TUI_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' mohak-tui-server 2>/dev/null || echo "unknown")
+              
+              echo "  AI Gateway: $AI_HEALTH, TUI Server: $TUI_HEALTH"
+              
+              if [ "$AI_HEALTH" = "healthy" ] && [ "$TUI_HEALTH" = "healthy" ]; then
+                echo "✓ All services healthy!"
                 break
               fi
+              
               if [ $i -eq 6 ]; then
-                echo "✗ Health check failed after 6 attempts"
-                docker compose -f docker-compose.prod.yml logs ai-gateway --tail 20
+                echo "✗ Health check failed after 60 seconds"
+                docker compose -f docker-compose.prod.yml ps
+                docker compose -f docker-compose.prod.yml logs --tail 30
                 exit 1
               fi
-              echo "  Attempt $i failed, retrying in 5s..."
-              sleep 5
+              
+              sleep 10
             done
 
+            echo ""
+            echo "▶ Final status:"
+            docker compose -f docker-compose.prod.yml ps
+            echo ""
             echo "✓ Deployment complete!"
 
       - name: Deployment Summary

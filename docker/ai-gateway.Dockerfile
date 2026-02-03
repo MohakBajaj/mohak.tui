@@ -45,6 +45,7 @@ USER appuser
 ENV AI_GATEWAY_PORT=3001
 ENV NODE_ENV=production
 ENV LOG_FORMAT=json
+ENV CONTENT_PATH=/app/packages/shared-content
 
 EXPOSE 3001
 
