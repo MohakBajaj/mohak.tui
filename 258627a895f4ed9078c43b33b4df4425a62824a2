@@ -1,0 +1,75 @@
+apps/tui-server/internal/ai/types.go
+  2ccb68cde55091a6 1-56
+apps/tui-server/internal/telemetry/analytics.go
+  2ccb68cde55091a6 8,30-33,57,157-183
+apps/tui-server/internal/ai/intent.go
+  2ccb68cde55091a6 1-51
+apps/tui-server/internal/ai/preprocess.go
+  2ccb68cde55091a6 1-30
+apps/tui-server/internal/ai/service.go
+  2ccb68cde55091a6 1-223
+apps/tui-server/internal/content/embedded.go
+  2ccb68cde55091a6 1-8
+apps/tui-server/internal/content/content.go
+  2ccb68cde55091a6 6,73,80,95,110,127-133
+apps/tui-server/main.go
+  2ccb68cde55091a6 8,19,47-56,61-62,92-108,170,271-274,277,279,281-293,296
+package.json
+  2ccb68cde55091a6 7,9
+apps/tui-server/internal/content/assets/projects.json
+  2ccb68cde55091a6 1-58
+apps/tui-server/internal/ai/prompt.go
+  2ccb68cde55091a6 1-237
+.env.example
+  2ccb68cde55091a6 5,33-34
+apps/tui-server/internal/content/assets/bio.md
+  2ccb68cde55091a6 1-29
+docker/tui-server.Dockerfile
+  2ccb68cde55091a6 42
+apps/tui-server/internal/ai/ai_test.go
+  2ccb68cde55091a6 1-118
+apps/tui-server/internal/ai/vercel_gateway.go
+  2ccb68cde55091a6 1-172
+.github/workflows/ci.yml
+  2ccb68cde55091a6 59
+CLAUDE.md
+  2ccb68cde55091a6 5,16,35,39,41,43-44,46,48-49,67,70,96,143,145-147,173
+scripts/build-termux.sh
+  2ccb68cde55091a6 7,13-14,25,34-37,40,48-49,54-56,58,63
+apps/tui-server/internal/network/transport.go
+  2ccb68cde55091a6 1-126
+docker-compose.yml
+  2ccb68cde55091a6 14-18,36-37
+apps/tui-server/internal/app/model.go
+  2ccb68cde55091a6 14,58,91,100-102,108,111,115-116,124,474,503,505,508,517,540-550
+README.md
+  2ccb68cde55091a6 3,12,21,23-24,32,35,80,86,108-110,116,120,154,163-165,175,199,226,301,312,316,358,366,399
+apps/tui-server/internal/content/assets/resume.json
+  2ccb68cde55091a6 1-94
+.github/workflows/deploy.yml
+  2ccb68cde55091a6 152,154
+apps/tui-server/internal/ui/views.go
+  2ccb68cde55091a6 23-26,29,32,34,39,48
+docker/docker-compose.prod.yml
+  2ccb68cde55091a6 14-18,41-42,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "258627a895f4ed9078c43b33b4df4425a62824a2",
+  "prompts": {
+    "2ccb68cde55091a6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "fd04da4e-32ce-47b0-b8be-23db039eed1b",
+        "model": "gpt-5.4-medium"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 1465,
+      "total_deletions": 436,
+      "accepted_lines": 1427,
+      "overriden_lines": 0
+    }
+  }
+}
