@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:termux": "./scripts/build-termux.sh",
     "dev": "turbo run dev",
     "dev:ai": "turbo run dev --filter=@mohak/ai-gateway",
     "dev:tui": "turbo run dev --filter=@mohak/tui-server",

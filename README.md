@@ -104,6 +104,32 @@ bun run dev:tui
 ssh -p 2222 localhost
 ```
 
+### Termux Build
+
+Build Linux ARM64 artifacts for Termux with:
+
+```bash
+bun run build:termux
+```
+
+This writes a deployable bundle to `dist/termux` with:
+
+- `bin/tui-server-linux-arm64` - Go SSH server binary
+- `bin/ai-gateway-linux-arm64` - Bun standalone Linux ARM64 executable
+- `bundle/ai-gateway.js` - Bun fallback bundle for Termux
+- `content/` - shared runtime content
+- `run-termux.sh` - launcher that wires the services together
+
+On Termux, run:
+
+```bash
+cd dist/termux
+chmod +x ./run-termux.sh ./bin/tui-server-linux-arm64 ./bin/ai-gateway-linux-arm64
+./run-termux.sh
+```
+
+`run-termux.sh` prefers `bun bundle/ai-gateway.js` when `bun` is available, because Bun's standalone Linux binaries are not guaranteed to run directly on Android's libc without a compatibility layer.
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action                            |
