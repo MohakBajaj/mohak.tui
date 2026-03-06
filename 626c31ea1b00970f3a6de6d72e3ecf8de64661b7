@@ -1,0 +1,29 @@
+scripts/build-termux.sh
+  2ccb68cde55091a6 1-106
+.gitignore
+  2ccb68cde55091a6 49
+package.json
+  2ccb68cde55091a6 6
+README.md
+  2ccb68cde55091a6 107-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "626c31ea1b00970f3a6de6d72e3ecf8de64661b7",
+  "prompts": {
+    "2ccb68cde55091a6": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "fd04da4e-32ce-47b0-b8be-23db039eed1b",
+        "model": "gpt-5.4-medium"
+      },
+      "human_author": "Mohak Bajaj <bmohak87@gmail.com>",
+      "messages": [],
+      "total_additions": 509,
+      "total_deletions": 247,
+      "accepted_lines": 274,
+      "overriden_lines": 0
+    }
+  }
+}
