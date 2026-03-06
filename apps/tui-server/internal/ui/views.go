@@ -20,19 +20,23 @@ func center(text string, width int) string {
 
 // boxWidth calculates optimal box width based on screen width
 func boxWidth(screenWidth int) int {
+	if screenWidth <= 0 {
+		return 24
+	}
+
 	// Responsive box sizing
 	if screenWidth < 60 {
-		return screenWidth - 4
+		return max(20, screenWidth-4)
 	}
 	if screenWidth < 100 {
-		return min(60, screenWidth-8)
+		return max(20, min(60, screenWidth-8))
 	}
-	return min(70, screenWidth-20)
+	return max(20, min(70, screenWidth-20))
 }
 
 // contentWidth returns usable content width inside a box
 func contentWidth(boxW int) int {
-	return boxW - 4 // 2 chars for borders on each side
+	return max(8, boxW-4) // 2 chars for borders on each side
 }
 
 func box(title string, lines []string, styles theme.Styles, width int) string {
@@ -41,7 +45,7 @@ func box(title string, lines []string, styles theme.Styles, width int) string {
 	cw := contentWidth(bw)
 
 	// Top border with title
-	titleLen := min(len(title), cw-4)
+	titleLen := min(len(title), max(1, cw-4))
 	titlePad := (cw - titleLen) / 2
 	if titlePad < 1 {
 		titlePad = 1

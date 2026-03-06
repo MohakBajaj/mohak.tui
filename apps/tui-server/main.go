@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
-	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -16,8 +16,8 @@ import (
 	"github.com/joho/godotenv"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/ai"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/app"
-	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/client"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/content"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/telemetry"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/theme"
@@ -44,14 +44,22 @@ func main() {
 	// Configuration from environment
 	host := getEnv("SSH_HOST", defaultHost)
 	port := getEnv("SSH_PORT", defaultPort)
-	aiGatewayURL := getEnv("AI_GATEWAY_URL", "http://localhost:3001")
-	contentPath := getEnv("CONTENT_PATH", getContentPath())
+	contentPath := os.Getenv("CONTENT_PATH")
+	modelName := getEnv("AI_GATEWAY_MODEL", "openai/gpt-oss-20b")
+	maxTokens := getEnvInt("AI_GATEWAY_MAX_TOKENS", 1024)
+	temperature := getEnvFloat("AI_TEMPERATURE", 0.7)
+	rateLimit := getEnvInt("AI_GATEWAY_RATE_LIMIT", 10)
+
+	contentSource := "embedded"
+	if contentPath != "" {
+		contentSource = contentPath
+	}
 
 	logger.Info("Starting SSH server", telemetry.Ctx(
 		"host", host,
 		"port", port,
-		"aiGateway", aiGatewayURL,
-		"contentPath", contentPath,
+		"model", modelName,
+		"contentSource", contentSource,
 	))
 
 	// Track server start
@@ -81,19 +89,23 @@ func main() {
 	}
 	logger.Debug("Bio loaded successfully")
 
-	// Create AI client
-	aiClient := client.NewAIClient(aiGatewayURL)
-
-	// Check AI gateway health (non-blocking)
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := aiClient.Health(ctx); err != nil {
-			logger.Warn("AI gateway not available", telemetry.Ctx("error", err.Error()))
-		} else {
-			logger.Info("AI gateway connected")
-		}
-	}()
+	promptBuilder := ai.NewPromptBuilder(resume, projects, bio)
+	aiProvider := ai.NewVercelGatewayProvider(os.Getenv("AI_GATEWAY_API_KEY"))
+	aiService := ai.NewService(ai.Config{
+		Provider:         aiProvider,
+		Logger:           logger,
+		Analytics:        analytics,
+		PromptBuilder:    promptBuilder,
+		Model:            modelName,
+		MaxTokens:        maxTokens,
+		Temperature:      temperature,
+		TopP:             0.9,
+		FrequencyPenalty: 0.3,
+		PresencePenalty:  0.1,
+		MaxHistoryLength: 10,
+		RateLimitMax:     rateLimit,
+		RateLimitWindow:  time.Minute,
+	})
 
 	// Session counter for rate limiting
 	sessionCounter := NewSessionCounter(maxSessionsPerIP)
@@ -155,7 +167,7 @@ func main() {
 					Resume:       resume,
 					Projects:     projects,
 					Bio:          bio,
-					AIClient:     aiClient,
+					AIService:    aiService,
 					SessionID:    sessionID,
 					Width:        width,
 					Height:       height,
@@ -256,24 +268,32 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-func getContentPath() string {
-	paths := []string{
-		"../../packages/shared-content",
-		"../packages/shared-content",
-		"./packages/shared-content",
+func getEnvInt(key string, defaultValue int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
 	}
 
-	for _, p := range paths {
-		abs, err := filepath.Abs(p)
-		if err != nil {
-			continue
-		}
-		if _, err := os.Stat(filepath.Join(abs, "resume.json")); err == nil {
-			return abs
-		}
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultValue
 	}
 
-	return "./packages/shared-content"
+	return parsed
+}
+
+func getEnvFloat(key string, defaultValue float64) float64 {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return defaultValue
+	}
+
+	return parsed
 }
 
 // SessionCounter tracks sessions per IP for rate limiting

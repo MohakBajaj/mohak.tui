@@ -1,0 +1,94 @@
+{
+  "name": "Mohak Bajaj",
+  "title": "Full Stack Architect & DevOps Engineer",
+  "tagline": "Adaptable, Resilient, Amicable",
+  "contact": {
+    "email": "bmohak87@gmail.com",
+    "website": "bmohak.xyz",
+    "github": "github.com/mohak-bajaj",
+    "linkedin": "linkedin.com/in/MohakBajaj",
+    "twitter": "@MohakBajaj5"
+  },
+  "summary": "Motivated Software Engineer specializing in DevOps and Full-Stack Development. With hands-on experience in cutting-edge technologies like React, Node.js, Docker, Kubernetes, and AWS, I am passionate about building scalable and efficient solutions. My expertise spans developing robust applications, managing CI/CD pipelines, and optimizing cloud infrastructure for reliability and performance.",
+  "experience": [
+    {
+      "company": "Gutenberg Communications",
+      "role": "Full Stack Architect",
+      "period": "Dec 2024 - Present",
+      "highlights": [
+        "Leading architecture and development of AI-powered marketing solutions",
+        "Designing scalable systems for enterprise clients"
+      ]
+    },
+    {
+      "company": "rtCamp",
+      "role": "Associate Software Engineer",
+      "period": "Jan 2025 - Apr 2025",
+      "highlights": [
+        "Contributed to WordPress VIP and enterprise solutions",
+        "Worked on performance optimization and scalability"
+      ]
+    },
+    {
+      "company": "Gutenberg Communications",
+      "role": "Full Stack Developer Intern",
+      "period": "Jun 2024 - Dec 2024",
+      "highlights": [
+        "Designed and implemented cutting-edge AI solutions for marketing workflows",
+        "Built feature-rich admin dashboard with real-time data visualization",
+        "Developed real-time collaboration functionalities",
+        "Worked with Rich Text Editors, OpenAI Assistant API"
+      ]
+    },
+    {
+      "company": "plutosONE",
+      "role": "Full Stack Developer Intern",
+      "period": "Jun 2023 - Jul 2023",
+      "highlights": [
+        "Developed multi-channel marketing communication platform",
+        "Built pm2 application monitoring system for stability",
+        "Integrated in-house OAuth system for improved security"
+      ]
+    }
+  ],
+  "skills": {
+    "languages": [
+      "JavaScript",
+      "TypeScript",
+      "Python",
+      "Go",
+      "Java",
+      "C++",
+      "Dart"
+    ],
+    "frontend": ["React", "Next.js", "TailwindCSS", "HTML/CSS"],
+    "backend": ["Node.js", "Express.js", "Flask", "Hono"],
+    "databases": ["MongoDB", "PostgreSQL", "Redis"],
+    "devops": ["Docker", "Kubernetes", "AWS", "CI/CD", "Jenkins", "Ansible"],
+    "tools": ["Grafana", "Prometheus", "GitHub Actions"],
+    "mobile": ["Flutter"]
+  },
+  "education": [
+    {
+      "institution": "University of Petroleum and Energy Studies",
+      "degree": "B. Tech. CSE spl. DevOps",
+      "location": "Dehradun",
+      "period": "2021 - 2025",
+      "score": "8.31 CGPA"
+    },
+    {
+      "institution": "Preet Public School",
+      "degree": "XII Standard (CBSE)",
+      "location": "Delhi",
+      "period": "2018 - 2019",
+      "score": "89%"
+    }
+  ],
+  "achievements": [
+    "3rd position in INFAthon4.0, Informatica's nationwide coding competition",
+    "Participated in eYantra at IIT Bombay (2021)",
+    "Secretary of Xe-Tech Club, UPES established by Xebia",
+    "Organized XeFest at UPES (2023)",
+    "Volunteered at Adharshila NGO as IT Teacher"
+  ]
+}

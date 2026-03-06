@@ -4,10 +4,9 @@
   "scripts": {
     "build": "turbo run build",
     "build:termux": "./scripts/build-termux.sh",
-    "dev": "turbo run dev",
-    "dev:ai": "turbo run dev --filter=@mohak/ai-gateway",
+    "dev": "turbo run dev --filter=@mohak/tui-server",
     "dev:tui": "turbo run dev --filter=@mohak/tui-server",
-    "start": "turbo run start",
+    "start": "turbo run start --filter=@mohak/tui-server",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "devDependencies": {

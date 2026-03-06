@@ -1,6 +1,6 @@
 # bmohak.xyz - SSH TUI Portfolio
 
-A cyberpunk-themed SSH-accessible terminal portfolio built with Go, Bubble Tea, and Wish. Features AI-powered chat, full observability with PostHog, and production-grade logging.
+A cyberpunk-themed SSH-accessible terminal portfolio built with Go, Bubble Tea, and Wish. Features in-process AI chat via Vercel AI Gateway, embedded content, full observability with PostHog, and production-grade logging.
 
 ```bash
 ssh bmohak.xyz
@@ -9,7 +9,7 @@ ssh bmohak.xyz
 ## Features
 
 - **Cyberpunk UI** - Neon colors, box-drawing characters, and terminal aesthetics
-- **AI Chat** - Powered by Vercel AI SDK with intent-aware responses
+- **AI Chat** - Go-native streaming chat with intent-aware responses
 - **Full Observability** - PostHog analytics + structured logging
 - **Responsive** - Adapts to terminal size with proper text wrapping
 - **Keyboard Navigation** - Alt+key shortcuts for quick access
@@ -17,32 +17,27 @@ ssh bmohak.xyz
 
 ## Tech Stack
 
-| Component  | Technology                         |
-| ---------- | ---------------------------------- |
-| TUI Server | Go + Bubble Tea + Lip Gloss + Wish |
-| AI Gateway | Bun + Hono + Vercel AI SDK         |
-| Analytics  | PostHog (Node.js + Go SDKs)        |
-| Monorepo   | Turborepo + Bun                    |
+| Component  | Technology                                   |
+| ---------- | -------------------------------------------- |
+| TUI Server | Go + Bubble Tea + Lip Gloss + Wish           |
+| AI Runtime | Go + Vercel AI Gateway OpenAI-compatible API |
+| Analytics  | PostHog Go SDK                               |
+| Monorepo   | Turborepo + Bun                              |
 
 ## Project Structure
 
 ```
 mohak.tui/
 ├── apps/
-│   ├── tui-server/           # Go SSH + Bubble Tea TUI
+│   ├── tui-server/           # Go SSH + Bubble Tea TUI + integrated AI
 │   │   ├── internal/
 │   │   │   ├── app/          # Main Bubble Tea model
-│   │   │   ├── client/       # AI gateway client
+│   │   │   ├── ai/           # Prompting + provider abstraction
 │   │   │   ├── content/      # Content loaders
 │   │   │   ├── telemetry/    # Logging + PostHog analytics
 │   │   │   ├── theme/        # Cyberpunk color scheme
 │   │   │   └── ui/           # Views + markdown renderer
 │   │   └── main.go
-│   └── ai-gateway/           # Bun AI streaming service
-│       ├── lib/
-│       │   ├── logger.ts     # Structured logging
-│       │   └── analytics.ts  # PostHog integration
-│       └── index.ts
 ├── packages/
 │   └── shared-content/       # Resume, projects, bio data
 ├── turbo.json
@@ -82,19 +77,15 @@ go build -o bin/tui-server .
 
 ### Running Locally
 
-**Option 1: Run both services with Turborepo**
+**Option 1: Run the TUI server from the repo root**
 
 ```bash
 bun start
 ```
 
-**Option 2: Run services separately**
+**Option 2: Run the Go server directly**
 
 ```bash
-# Terminal 1 - AI Gateway
-bun run dev:ai
-
-# Terminal 2 - TUI Server
 bun run dev:tui
 ```
 
@@ -114,21 +105,19 @@ bun run build:termux
 
 This writes a deployable bundle to `dist/termux` with:
 
-- `bin/tui-server-linux-arm64` - Go SSH server binary
-- `bin/ai-gateway-linux-arm64` - Bun standalone Linux ARM64 executable
-- `bundle/ai-gateway.js` - Bun fallback bundle for Termux
-- `content/` - shared runtime content
-- `run-termux.sh` - launcher that wires the services together
+- `tui-server-linux-arm64` - self-contained Go SSH server binary
+- `run-termux.sh` - launcher for Termux
+- `README.termux.md` - deployment notes
 
 On Termux, run:
 
 ```bash
 cd dist/termux
-chmod +x ./run-termux.sh ./bin/tui-server-linux-arm64 ./bin/ai-gateway-linux-arm64
+chmod +x ./run-termux.sh ./tui-server-linux-arm64
 ./run-termux.sh
 ```
 
-`run-termux.sh` prefers `bun bundle/ai-gateway.js` when `bun` is available, because Bun's standalone Linux binaries are not guaranteed to run directly on Android's libc without a compatibility layer.
+The shared content is embedded into the Go binary, so no Bun runtime or extra content files are required on Termux.
 
 ## Keyboard Shortcuts
 
@@ -162,38 +151,28 @@ chmod +x ./run-termux.sh ./bin/tui-server-linux-arm64 ./bin/ai-gateway-linux-arm
 
 ## Environment Variables
 
-### AI Gateway (`apps/ai-gateway/.env`)
+### Integrated AI + TUI (`.env`)
 
 | Variable                | Description                     | Default                    |
 | ----------------------- | ------------------------------- | -------------------------- |
 | `AI_GATEWAY_API_KEY`    | Vercel AI Gateway API key       | Required                   |
 | `AI_GATEWAY_MODEL`      | Model identifier                | `openai/gpt-oss-20b`       |
-| `AI_GATEWAY_PORT`       | Server port                     | `3001`                     |
 | `AI_GATEWAY_RATE_LIMIT` | Requests per minute             | `10`                       |
 | `AI_GATEWAY_MAX_TOKENS` | Max response tokens             | `1024`                     |
 | `AI_TEMPERATURE`        | Response creativity (0-1)       | `0.7`                      |
+| `SSH_HOST`              | SSH server bind address         | `0.0.0.0`                  |
+| `SSH_PORT`              | SSH server port                 | `2222`                     |
+| `CONTENT_PATH`          | Optional content override path  | Embedded content           |
 | `POSTHOG_API_KEY`       | PostHog project API key         | Optional                   |
 | `POSTHOG_HOST`          | PostHog instance URL            | `https://us.i.posthog.com` |
 | `LOG_LEVEL`             | Logging level                   | `info`                     |
 | `LOG_FORMAT`            | Output format (`pretty`/`json`) | `pretty`                   |
 
-### TUI Server (`apps/tui-server/.env`)
-
-| Variable          | Description                     | Default                    |
-| ----------------- | ------------------------------- | -------------------------- |
-| `SSH_HOST`        | SSH server bind address         | `0.0.0.0`                  |
-| `SSH_PORT`        | SSH server port                 | `2222`                     |
-| `AI_GATEWAY_URL`  | AI Gateway URL                  | `http://localhost:3001`    |
-| `POSTHOG_API_KEY` | PostHog project API key         | Optional                   |
-| `POSTHOG_HOST`    | PostHog instance URL            | `https://us.i.posthog.com` |
-| `LOG_LEVEL`       | Logging level                   | `info`                     |
-| `LOG_FORMAT`      | Output format (`pretty`/`json`) | `pretty`                   |
-
 ## Observability
 
 ### Logging
 
-Both services use structured logging with configurable levels and formats:
+The Go server uses structured logging with configurable levels and formats:
 
 ```bash
 # Development (pretty output)
@@ -217,7 +196,7 @@ Events tracked (all PII-safe with hashed identifiers):
 - `tui_command_executed` - Slash commands
 - `tui_chat_sent` / `tui_chat_received` - Chat interactions
 
-**AI Gateway:**
+**Integrated AI layer:**
 
 - `ai_gateway_chat_request` - Incoming chat requests
 - `ai_gateway_chat_response` - Successful responses
@@ -244,7 +223,7 @@ All identifiers are SHA256 hashed for privacy:
 
 ## AI System
 
-The AI assistant (NEURAL) uses intent-aware prompting:
+The AI assistant (NEURAL) runs inside the Go TUI server and uses intent-aware prompting:
 
 **Query Intents:**
 
@@ -319,11 +298,8 @@ docker compose build
 **2. Or use pre-built images:**
 
 ```bash
-# Pull from GitHub Container Registry
+# Pull from GitHub Container Registry and use the production compose file
 docker pull ghcr.io/mohakbajaj/mohak-tui/tui-server:latest
-docker pull ghcr.io/mohakbajaj/mohak-tui/ai-gateway:latest
-
-# Use production compose file
 docker compose -f docker/docker-compose.prod.yml up -d
 ```
 
@@ -333,11 +309,11 @@ The repository includes CI/CD workflows:
 
 - **CI** (`.github/workflows/ci.yml`) - Runs on push to main / PRs
   - Lints TypeScript
-  - Builds Go binary
+  - Builds and tests the Go server
   - Builds Docker images
 
 - **Deploy** (`.github/workflows/deploy.yml`) - Runs on tags (`v*`) or manual trigger
-  - Builds multi-arch images (amd64/arm64)
+  - Builds and pushes the TUI server image (amd64/arm64)
   - Pushes to GitHub Container Registry
   - Deploys to `~/mohak-tui` on production server via SSH
 
@@ -375,16 +351,11 @@ nano .env  # Add AI_GATEWAY_API_KEY and other secrets
 
 ```yaml
 services:
-  ai-gateway:
-    environment:
-      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY}
-      - LOG_FORMAT=json # For log aggregation
-      - NODE_ENV=production
-
   tui-server:
     ports:
       - "22:2222" # Use port 22 for production
     environment:
+      - AI_GATEWAY_API_KEY=${AI_GATEWAY_API_KEY}
       - LOG_FORMAT=json
 ```
 
@@ -392,17 +363,13 @@ services:
 
 | Service    | Memory | CPU |
 | ---------- | ------ | --- |
-| AI Gateway | 512MB  | 1.0 |
-| TUI Server | 256MB  | 0.5 |
+| TUI Server | 512MB  | 1.0 |
 
 ### Monitoring
 
 **Health endpoints:**
 
 ```bash
-# AI Gateway
-curl http://localhost:3001/health
-
 # TUI Server (via netcat)
 nc -z localhost 2222
 ```
@@ -429,21 +396,7 @@ Events are tracked automatically. Create dashboards for:
 - Chat usage
 - Error rates
 
-### SSL/TLS (Optional)
-
-For HTTPS on the AI Gateway (if exposed publicly):
-
-```yaml
-# Use Traefik or nginx as reverse proxy
-services:
-  traefik:
-    image: traefik:v2.10
-    ports:
-      - "443:443"
-    # ... traefik config
-```
-
-SSH uses its own encryption - no additional TLS needed.
+SSH uses its own encryption, so no additional TLS termination is required for the public interface.
 
 ## Project Scripts
 

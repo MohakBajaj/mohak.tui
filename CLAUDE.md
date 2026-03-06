@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**mohak.tui** - A cyberpunk-themed SSH-accessible terminal portfolio built with Go and TypeScript.
+**mohak.tui** - A cyberpunk-themed SSH-accessible terminal portfolio built primarily with Go.
 
 - **Runtime**: Bun 1.3.2 (Node.js compatible)
 - **Languages**: Go 1.21+, TypeScript 5.x
@@ -13,8 +13,7 @@
 ```
 mohak.tui/
 ├── apps/
-│   ├── tui-server/      # Go: SSH server + Bubble Tea TUI
-│   └── ai-gateway/      # TypeScript: Hono + AI SDK streaming
+│   └── tui-server/      # Go: SSH server + Bubble Tea TUI + integrated AI
 └── packages/
     └── shared-content/  # Shared resume, projects, bio, theme JSON
 ```
@@ -33,21 +32,21 @@ Key patterns:
 - Session-isolated TUI instances per SSH connection
 - Rate limiting: max 5 sessions per IP
 - Idle timeout: 10 minutes
-- Content loaded from `shared-content` package at startup
+- Content loaded from embedded assets by default, with optional `CONTENT_PATH` override
 - **Telemetry via `internal/telemetry/`** - PostHog analytics + structured logging
 - **Dotenv support** - Loads `.env` file at startup
 
-### apps/ai-gateway (TypeScript)
+### Integrated AI Runtime (Go)
 
-Streaming AI proxy:
+The Go TUI server now handles AI chat in-process:
 
-- **Hono** - HTTP server framework
-- **Vercel AI SDK** - `streamText` with `@ai-sdk/gateway`
+- **Provider abstraction** - In `internal/ai/`, inspired by Mods-style backends
+- **Vercel AI Gateway** - Called via the OpenAI-compatible REST API
 - In-memory rate limiting (10 req/min default)
-- SSE streaming responses
+- SSE streaming parsing in Go
 - **Intent detection** - Classifies queries (greeting, about, experience, skills, projects, etc.)
-- **Structured logging** - via `lib/logger.ts`
-- **PostHog analytics** - via `lib/analytics.ts`
+- **Structured logging** - via `internal/telemetry/`
+- **PostHog analytics** - via `internal/telemetry/analytics.go`
 
 ### packages/shared-content
 
@@ -65,11 +64,10 @@ Static content consumed by both apps:
 # Install all dependencies
 bun install
 
-# Run both services (Turbo parallel)
+# Run the TUI server
 bun run dev
 
-# Run services individually
-bun run dev:ai     # AI Gateway on :3001
+# Run the TUI server directly
 bun run dev:tui    # SSH server on :2222
 
 # Format code
@@ -90,13 +88,12 @@ Copy `.env.example` to `.env` and configure:
 | ----------------------- | -------- | -------------------------- | ------------------------- |
 | `AI_GATEWAY_API_KEY`    | Yes      | -                          | Vercel AI Gateway API key |
 | `AI_GATEWAY_MODEL`      | No       | `openai/gpt-oss-20b`       | AI model                  |
-| `AI_GATEWAY_PORT`       | No       | `3001`                     | Gateway port              |
 | `AI_GATEWAY_RATE_LIMIT` | No       | `10`                       | Requests per minute       |
 | `AI_GATEWAY_MAX_TOKENS` | No       | `1024`                     | Max tokens in AI response |
 | `AI_TEMPERATURE`        | No       | `0.7`                      | Response creativity (0-1) |
 | `SSH_HOST`              | No       | `0.0.0.0`                  | SSH bind host             |
 | `SSH_PORT`              | No       | `2222`                     | SSH bind port             |
-| `AI_GATEWAY_URL`        | No       | `http://localhost:3001`    | Gateway URL for TUI       |
+| `CONTENT_PATH`          | No       | embedded                   | Optional content override |
 | `POSTHOG_API_KEY`       | No       | -                          | PostHog analytics key     |
 | `POSTHOG_HOST`          | No       | `https://us.i.posthog.com` | PostHog instance URL      |
 | `LOG_LEVEL`             | No       | `info`                     | debug, info, warn, error  |
@@ -143,11 +140,11 @@ Direct text input sends messages to AI chat.
 - **IMPORTANT**: Styles via `theme.Manager.Styles()` - NEVER create ad-hoc styles
 - **IMPORTANT**: All identifiers in telemetry must be SHA256 hashed for PII safety
 
-### TypeScript
+### Go AI
 
-- Hono handlers return `c.json()` or streaming responses
-- Use `Bun.env` for environment variables
-- Type all request/response bodies explicitly
+- Keep provider-specific code inside `internal/ai/`
+- Preserve streaming callback behavior expected by the Bubble Tea model
+- Prefer provider-neutral request types above the transport layer
 
 ## Telemetry
 
@@ -173,7 +170,7 @@ Events tracked (all PII-safe with hashed identifiers):
 - `tui_view_changed`, `tui_command_executed`
 - `tui_chat_sent` / `tui_chat_received`
 
-**AI Gateway:**
+**Integrated AI layer:**
 
 - `ai_gateway_chat_request` / `ai_gateway_chat_response`
 - `ai_gateway_chat_error`, `ai_gateway_rate_limit_hit`

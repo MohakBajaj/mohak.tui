@@ -65,15 +65,6 @@ echo ""
 echo "▶ Checking health..."
 docker compose ps
 
-# Health check
-if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
-    echo "✓ AI Gateway is healthy"
-else
-    echo "✗ AI Gateway health check failed"
-    docker compose logs ai-gateway --tail 50
-    exit 1
-fi
-
 if nc -z localhost "${SSH_PORT:-2222}" 2>/dev/null; then
     echo "✓ TUI Server is healthy"
 else

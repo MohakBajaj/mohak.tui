@@ -19,7 +19,6 @@ RUN go mod download
 # Copy source code
 WORKDIR /build
 COPY apps/tui-server ./apps/tui-server
-COPY packages/shared-content ./packages/shared-content
 
 # Build binary
 WORKDIR /build/apps/tui-server
@@ -40,14 +39,11 @@ RUN addgroup -g 1001 appgroup && \
     adduser -u 1001 -G appgroup -s /bin/sh -D appuser
 
 # Create directories
-RUN mkdir -p /app/.ssh /app/content && \
+RUN mkdir -p /app/.ssh && \
     chown -R appuser:appgroup /app
 
 # Copy binary
 COPY --from=builder /build/bin/tui-server /app/tui-server
-
-# Copy content
-COPY --from=builder /build/packages/shared-content /app/content
 
 # Set ownership
 RUN chown -R appuser:appgroup /app
@@ -57,7 +53,6 @@ USER appuser
 # Environment
 ENV SSH_HOST=0.0.0.0
 ENV SSH_PORT=2222
-ENV CONTENT_PATH=/app/content
 ENV LOG_FORMAT=json
 
 EXPOSE 2222

@@ -3,6 +3,7 @@ package content
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 )
 
 // Resume represents the portfolio resume data
@@ -69,15 +70,14 @@ type Loader struct {
 	basePath string
 }
 
-// NewLoader creates a content loader
+// NewLoader creates a content loader. When basePath is empty, embedded content is used.
 func NewLoader(basePath string) *Loader {
 	return &Loader{basePath: basePath}
 }
 
 // LoadResume reads and parses the resume JSON
 func (l *Loader) LoadResume() (*Resume, error) {
-	path := l.basePath + "/resume.json"
-	data, err := os.ReadFile(path)
+	data, err := l.readFile("resume.json")
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +92,7 @@ func (l *Loader) LoadResume() (*Resume, error) {
 
 // LoadProjects reads and parses the projects JSON
 func (l *Loader) LoadProjects() (*Projects, error) {
-	path := l.basePath + "/projects.json"
-	data, err := os.ReadFile(path)
+	data, err := l.readFile("projects.json")
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +107,7 @@ func (l *Loader) LoadProjects() (*Projects, error) {
 
 // LoadBio reads the bio markdown file
 func (l *Loader) LoadBio() (string, error) {
-	path := l.basePath + "/bio.md"
-	data, err := os.ReadFile(path)
+	data, err := l.readFile("bio.md")
 	if err != nil {
 		return "", err
 	}
@@ -125,4 +123,12 @@ func (p *Projects) GetProjectByID(id string) *Project {
 		}
 	}
 	return nil
+}
+
+func (l *Loader) readFile(name string) ([]byte, error) {
+	if l.basePath != "" {
+		return os.ReadFile(filepath.Join(l.basePath, name))
+	}
+
+	return embeddedContent.ReadFile(filepath.ToSlash(filepath.Join("assets", name)))
 }

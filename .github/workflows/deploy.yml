@@ -28,7 +28,6 @@ jobs:
       packages: write
     outputs:
       tui_image: ${{ steps.set-images.outputs.tui_image }}
-      ai_image: ${{ steps.set-images.outputs.ai_image }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,7 +36,6 @@ jobs:
         run: |
           REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "tui_image=ghcr.io/${REPO_LC}/tui-server" >> $GITHUB_OUTPUT
-          echo "ai_image=ghcr.io/${REPO_LC}/ai-gateway" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -59,16 +57,6 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest
 
-      - name: Extract metadata for AI Gateway
-        id: meta-ai
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.set-images.outputs.ai_image }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=sha,prefix=
-            type=raw,value=latest
-
       - name: Build and push TUI Server
         uses: docker/build-push-action@v5
         with:
@@ -77,18 +65,6 @@ jobs:
           push: true
           tags: ${{ steps.meta-tui.outputs.tags }}
           labels: ${{ steps.meta-tui.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-
-      - name: Build and push AI Gateway
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/ai-gateway.Dockerfile
-          push: true
-          tags: ${{ steps.meta-ai.outputs.tags }}
-          labels: ${{ steps.meta-ai.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
@@ -146,8 +122,6 @@ jobs:
 
             # Image names
             TUI_IMAGE="${{ needs.build-push.outputs.tui_image }}:latest"
-            AI_IMAGE="${{ needs.build-push.outputs.ai_image }}:latest"
-
             echo "▶ Setting up .env if needed..."
             if [ ! -f .env ]; then
               cp .env.example .env
@@ -159,14 +133,12 @@ jobs:
 
             echo "▶ Pulling latest images..."
             docker pull $TUI_IMAGE
-            docker pull $AI_IMAGE
 
             echo "▶ Stopping existing containers..."
             docker compose -f docker-compose.prod.yml down || true
 
             echo "▶ Starting services with new images..."
             export TUI_IMAGE
-            export AI_IMAGE
             docker compose -f docker-compose.prod.yml up -d
 
             echo "▶ Cleaning up old images..."
@@ -175,12 +147,11 @@ jobs:
             echo "▶ Waiting for containers to be healthy..."
             # Wait for Docker health checks (up to 60 seconds)
             for i in 1 2 3 4 5 6; do
-              AI_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' mohak-ai-gateway 2>/dev/null || echo "unknown")
               TUI_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' mohak-tui-server 2>/dev/null || echo "unknown")
               
-              echo "  AI Gateway: $AI_HEALTH, TUI Server: $TUI_HEALTH"
+              echo "  TUI Server: $TUI_HEALTH"
               
-              if [ "$AI_HEALTH" = "healthy" ] && [ "$TUI_HEALTH" = "healthy" ]; then
+              if [ "$TUI_HEALTH" = "healthy" ]; then
                 echo "✓ All services healthy!"
                 break
               fi
@@ -208,6 +179,5 @@ jobs:
           echo "  Deployment Successful!"
           echo "═══════════════════════════════════════════════"
           echo "  TUI Image: ${{ needs.build-push.outputs.tui_image }}:latest"
-          echo "  AI Image: ${{ needs.build-push.outputs.ai_image }}:latest"
           echo "  Server: ${{ secrets.DEPLOY_HOST }}"
           echo "═══════════════════════════════════════════════"

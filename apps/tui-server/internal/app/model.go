@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/client"
+	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/ai"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/content"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/theme"
 	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/ui"
@@ -55,7 +55,7 @@ type Model struct {
 	input    textinput.Model
 	viewport viewport.Model
 
-	aiClient     *client.AIClient
+	aiService    ai.ChatService
 	chatHistory  []ChatMessage
 	chatResponse *strings.Builder
 	isStreaming  bool
@@ -88,7 +88,7 @@ type Config struct {
 	Resume       *content.Resume
 	Projects     *content.Projects
 	Bio          string
-	AIClient     *client.AIClient
+	AIService    ai.ChatService
 	SessionID    string
 	Width        int
 	Height       int
@@ -97,20 +97,23 @@ type Config struct {
 
 // NewModel creates a new app model
 func NewModel(cfg Config) Model {
+	width := max(cfg.Width, 80)
+	height := max(cfg.Height, 24)
+
 	input := textinput.New()
 	input.Prompt = ""
 	input.Placeholder = "enter command or chat..."
 	input.Focus()
 	input.CharLimit = 1000
-	input.Width = cfg.Width - 8
+	input.Width = max(width-8, 20)
 
 	// Header (3) + Footer (5) = 8 lines reserved
-	vp := viewport.New(cfg.Width-4, cfg.Height-8)
+	vp := viewport.New(max(width-4, 20), max(height-8, 8))
 	vp.Style = lipgloss.NewStyle()
 
 	return Model{
-		width:        cfg.Width,
-		height:       cfg.Height,
+		width:        width,
+		height:       height,
 		themeManager: cfg.ThemeManager,
 		resume:       cfg.Resume,
 		projects:     cfg.Projects,
@@ -118,7 +121,7 @@ func NewModel(cfg Config) Model {
 		view:         ViewChat,
 		input:        input,
 		viewport:     vp,
-		aiClient:     cfg.AIClient,
+		aiService:    cfg.AIService,
 		chatHistory:  make([]ChatMessage, 0),
 		chatResponse: &strings.Builder{},
 		streamMu:     &sync.Mutex{},
@@ -468,7 +471,7 @@ func viewName(v View) string {
 }
 
 func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
-	if m.aiClient == nil {
+	if m.aiService == nil {
 		m.errorMessage = "AI not available"
 		if m.analytics != nil {
 			m.analytics.TrackChatError(m.sessionID, "AI not available")
@@ -497,12 +500,12 @@ func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
 	m.errChan = errChan
 	m.updateViewport()
 
-	history := make([]client.Message, 0, len(m.chatHistory)-1)
+	history := make([]ai.Message, 0, len(m.chatHistory)-1)
 	for _, msg := range m.chatHistory[:len(m.chatHistory)-1] {
-		history = append(history, client.Message{Role: msg.Role, Content: msg.Content})
+		history = append(history, ai.Message{Role: msg.Role, Content: msg.Content})
 	}
 
-	aiClient := m.aiClient
+	aiService := m.aiService
 	sessionID := m.sessionID
 	analytics := m.analytics
 	startTime := time.Now()
@@ -511,7 +514,7 @@ func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
 		defer close(chunkChan)
 		defer close(errChan)
 		var totalResponse strings.Builder
-		err := aiClient.ChatStream(ctx, sessionID, message, history, func(chunk string) error {
+		err := aiService.ChatStream(ctx, sessionID, message, history, func(chunk string) error {
 			totalResponse.WriteString(chunk)
 			select {
 			case <-ctx.Done():
@@ -534,6 +537,17 @@ func (m Model) sendChatMessage(message string) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) updateViewport() {
+	if m.width <= 0 {
+		m.width = 80
+	}
+	if m.height <= 0 {
+		m.height = 24
+	}
+
+	m.input.Width = max(m.width-8, 20)
+	m.viewport.Width = max(m.width-4, 20)
+	m.viewport.Height = max(m.height-8, 8)
+
 	styles := m.themeManager.Styles()
 	mdRenderer := ui.NewMarkdownRenderer(styles)
 

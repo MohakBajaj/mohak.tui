@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mohakbajaj/mohak-tui/apps/tui-server/internal/network"
 	"github.com/posthog/posthog-go"
 )
 
@@ -26,6 +27,10 @@ const (
 	EventChatError           = "tui_chat_error"
 	EventServerStart         = "tui_server_start"
 	EventServerStop          = "tui_server_stop"
+	EventAIRequest           = "ai_gateway_chat_request"
+	EventAIResponse          = "ai_gateway_chat_response"
+	EventAIError             = "ai_gateway_chat_error"
+	EventAIRateLimitHit      = "ai_gateway_rate_limit_hit"
 )
 
 // NewAnalytics creates a new Analytics instance
@@ -49,6 +54,7 @@ func NewAnalytics(logger *Logger) *Analytics {
 		Endpoint:  host,
 		BatchSize: 10,
 		Interval:  5 * time.Second,
+		Transport: network.NewHTTPTransport(),
 	})
 
 	if err != nil {
@@ -146,6 +152,35 @@ func (a *Analytics) TrackChatReceived(sessionID string, responseLength int, dura
 func (a *Analytics) TrackChatError(sessionID string, errorMsg string) {
 	a.capture(EventChatError, sessionID, posthog.NewProperties().
 		Set("error", errorMsg))
+}
+
+// TrackAIRequest tracks an upstream AI request.
+func (a *Analytics) TrackAIRequest(sessionID string, messageLength int, historyLength int, model string) {
+	a.capture(EventAIRequest, sessionID, posthog.NewProperties().
+		Set("message_length", messageLength).
+		Set("history_length", historyLength).
+		Set("model", model))
+}
+
+// TrackAIResponse tracks an upstream AI response completion.
+func (a *Analytics) TrackAIResponse(sessionID string, durationMs int64, model string, success bool) {
+	a.capture(EventAIResponse, sessionID, posthog.NewProperties().
+		Set("duration_ms", durationMs).
+		Set("model", model).
+		Set("success", success))
+}
+
+// TrackAIError tracks an upstream AI error.
+func (a *Analytics) TrackAIError(sessionID string, errorMsg string, errorType string) {
+	a.capture(EventAIError, sessionID, posthog.NewProperties().
+		Set("error", errorMsg).
+		Set("error_type", errorType))
+}
+
+// TrackAIRateLimit tracks a provider-side or local AI rate limit hit.
+func (a *Analytics) TrackAIRateLimit(sessionID string, remaining int) {
+	a.capture(EventAIRateLimitHit, sessionID, posthog.NewProperties().
+		Set("remaining", remaining))
 }
 
 // TrackServerStart tracks server startup
