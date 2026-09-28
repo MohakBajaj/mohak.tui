@@ -19,15 +19,22 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  # Run the same verification the CI workflow runs before anything ships
+  verify:
+    name: Verify
+    uses: ./.github/workflows/ci.yml
+
   # Build and push Docker images to GitHub Container Registry
   build-push:
     name: Build & Push Images
     runs-on: ubuntu-latest
+    needs: verify
     permissions:
       contents: read
       packages: write
     outputs:
       tui_image: ${{ steps.set-images.outputs.tui_image }}
+      tui_digest: ${{ steps.build-tui.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,6 +65,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push TUI Server
+        id: build-tui
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -120,18 +128,28 @@ jobs:
             set -e
             cd ~/mohak-tui
 
-            # Image names
-            TUI_IMAGE="${{ needs.build-push.outputs.tui_image }}:latest"
+            # Deploy the exact image that passed verification, addressed by digest
+            TUI_IMAGE="${{ needs.build-push.outputs.tui_image }}@${{ needs.build-push.outputs.tui_digest }}"
+            echo "▶ Deploying $TUI_IMAGE"
+
             echo "▶ Setting up .env if needed..."
             if [ ! -f .env ]; then
               cp .env.example .env
               echo "⚠ Created .env from .env.example - please configure it!"
             fi
 
+            # Record the deployed digest so restarts and rollbacks reuse this image
+            echo "▶ Recording deployed image..."
+            if grep -q '^TUI_IMAGE=' .env; then
+              sed -i "s|^TUI_IMAGE=.*|TUI_IMAGE=${TUI_IMAGE}|" .env
+            else
+              printf 'TUI_IMAGE=%s\n' "${TUI_IMAGE}" >> .env
+            fi
+
             echo "▶ Logging into GitHub Container Registry..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin || true
 
-            echo "▶ Pulling latest images..."
+            echo "▶ Pulling pinned image..."
             docker pull $TUI_IMAGE
 
             echo "▶ Stopping existing containers..."
@@ -178,6 +196,6 @@ jobs:
           echo "═══════════════════════════════════════════════"
           echo "  Deployment Successful!"
           echo "═══════════════════════════════════════════════"
-          echo "  TUI Image: ${{ needs.build-push.outputs.tui_image }}:latest"
+          echo "  TUI Image: ${{ needs.build-push.outputs.tui_image }}@${{ needs.build-push.outputs.tui_digest }}"
           echo "  Server: ${{ secrets.DEPLOY_HOST }}"
           echo "═══════════════════════════════════════════════"
